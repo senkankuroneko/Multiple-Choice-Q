@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>n択クイズ演習</title>
+<title>ｎ択問題演習</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
@@ -213,7 +213,7 @@
     font-family:'Inter',sans-serif;
     cursor:pointer;
     transition:background .15s,border-color .15s;
-    white-space:nowrap;
+    touch-action:manipulation;
     overflow:hidden;
     text-overflow:ellipsis;
   }
@@ -254,6 +254,7 @@
     cursor:pointer;
     display:flex;align-items:center;justify-content:center;
     transition:background .15s,border-color .15s,opacity .15s;
+    touch-action:manipulation;
   }
   .btn-nav:hover:not(:disabled){background:#2a3040;border-color:#3a4355;}
   .btn-nav:disabled{opacity:.25;cursor:default;pointer-events:none;}
@@ -703,6 +704,10 @@
       padding:16px 14px 14px;
     }
 
+    /* quiz-bodyに最小高さを確保して問題文が潰れないようにする */
+    .quiz-body{ min-height:80px; flex:0 0 auto; }
+    .card-bottom{ flex:0 0 auto; }
+
     /* 問題文フォントサイズを少し下げる */
     .question-text{ font-size:17px; }
 
@@ -734,7 +739,7 @@
 <div class="app">
   <div class="topbar">
     <div class="brand">
-      <span class="mark">n択クイズ演習</span>
+      <span class="mark">ｎ択問題演習</span>
       <span class="sub">SELF-STUDY DECK</span>
     </div>
     <div class="topbar-actions">
