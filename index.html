@@ -150,11 +150,10 @@
   .qno-total{color:var(--muted);font-weight:500;}
 
   .quiz-body{
-    flex:0 0 auto;
+    flex:0 0 200px;
     display:flex;
     flex-direction:column;
     min-height:0;
-    max-height:40%;
     overflow-y:auto;
   }
 
@@ -709,7 +708,8 @@
       padding:16px 14px 14px;
     }
 
-    /* quiz-bodyはベーススタイルのmax-height:40%でカードに対して比例する */
+    /* quiz-bodyをスマホでも固定高さにして選択肢位置を揃える */
+    .quiz-body{ flex:0 0 150px; }
 
     /* 問題文フォントサイズを少し下げる */
     .question-text{ font-size:17px; }
