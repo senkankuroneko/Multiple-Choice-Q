@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ｎ択問題演習</title>
+<title>n択クイズ演習</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
@@ -674,10 +674,58 @@
   .import-label:hover{border-color:#3a4250;background:#262c35;}
   .import-label input[type="file"]{display:none;}
 
+  /* スクロールバー */
+  ::-webkit-scrollbar{width:5px;height:5px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#3a4250;border-radius:99px;}
+  ::-webkit-scrollbar-thumb:hover{background:#4e5a6a;}
+  * { scrollbar-width:thin; scrollbar-color:#3a4250 transparent; }
+
   @media (max-width:760px){
-    .layout{flex-direction:column;}
-    .sidebar{width:100%;min-height:auto;max-height:220px;}
-    .card{min-height:auto;}
+    body{ padding:12px 10px 40px; }
+
+    .app{ max-width:100%; }
+
+    /* トップバー：ブランドとボタン群を縦積み */
+    .topbar{ flex-direction:column; align-items:flex-start; gap:8px; margin-bottom:12px; }
+    .topbar-actions{ flex-wrap:wrap; gap:6px; }
+    .btn{ font-size:12px; padding:7px 10px; }
+    .brand .mark{ font-size:17px; }
+    .brand .sub{ font-size:11px; }
+
+    /* レイアウト：縦積み */
+    .layout{ flex-direction:column; gap:12px; }
+
+    /* カード：高さを固定ではなく最小高さに */
+    .card{
+      height:auto;
+      min-height:0;
+      padding:16px 14px 14px;
+    }
+
+    /* 問題文フォントサイズを少し下げる */
+    .question-text{ font-size:17px; }
+
+    /* 選択肢 */
+    .opt{ font-size:13.5px; padding:12px 11px; }
+
+    /* ナビボタン幅を少し狭く */
+    .btn-nav{ width:36px; }
+
+    /* サイドバー：横幅いっぱい、高さは10問分固定 */
+    .sidebar{
+      width:100%;
+      height:auto;
+    }
+    .stub-list{ max-height:300px; }
+
+    /* エディタオーバーレイ */
+    .editor-panel{ padding:16px; }
+  }
+
+  @media (max-width:400px){
+    .topbar-actions .btn:nth-child(n+3){ font-size:11px; padding:6px 8px; }
+    .question-text{ font-size:15px; }
   }
 </style>
 </head>
@@ -686,7 +734,7 @@
 <div class="app">
   <div class="topbar">
     <div class="brand">
-      <span class="mark">ｎ択問題演習</span>
+      <span class="mark">n択クイズ演習</span>
       <span class="sub">SELF-STUDY DECK</span>
     </div>
     <div class="topbar-actions">
@@ -716,13 +764,14 @@
   <div class="editor-panel">
     <h2 class="display">問題データを編集</h2>
     <p class="hint">
-      タブ区切り（スプレッドシートからのコピペ）またはカンマ区切り<br>
-      列の並び：<b>問題文, 解説</b>(任意)<b>, 正解, 誤答1, 誤答2, ...</b>（誤答は何列でも追加可）<br>
       解説を省く場合は列ごと省略可。正解の直後から誤答列として扱う。
+      タブ区切り（スプレッドシートからのコピペ）またはカンマ区切り。<br>
+      列の並び：<b>チェック(0/1)</b>(任意)<b>, 問題文, 解説</b>(任意)<b>, 正解, 誤答1, 誤答2, ...</b><br>
+      チェック列は1行目が0か1のとき自動認識される。
     </p>
     <div class="import-row">
       <div class="drop-zone" id="dropZone">
-        <span class="drop-zone-text">ここにファイルをドロップ（.tsv, .csv, .txt）</span>
+        <span class="drop-zone-text">ここにファイルをドロップ</span>
         <span class="drop-zone-or">または</span>
         <label class="import-label">
           ファイルを選択
@@ -786,10 +835,10 @@ const CHECK_KEY = 'nquiz_checks_v1';
 const SETS_KEY  = 'nquiz_sets_v1';
 
 const SAMPLE_TSV =
-`問題\t解説\t正解\t誤答1\t誤答2\t誤答3
-日本で一番高い山は?\t標高3776mの山梨県と静岡県にまたがる成層火山。\t富士山\t北岳\t穂高岳\t立山
-「火曜日」を英語で言うと?\t\tTuesday\tThursday\tWednesday\tSaturday
-【光の三原色は「赤・黄・青」である。】\t正しくは「赤・緑・青」。正解を「○」「✕」などにした問題は正誤問題として認識される。。\t×`;
+`チェック\t問題\t解説\t正解\t誤答1\t誤答2\t誤答3
+0\t「正答」を押してください。2回目のクリックで解答判定となります。\t解説がある場合は「ここ」に表示されます。正解の選択肢を再度押すと次の問題に進みます。\t正答\t誤答（選択肢はランダムに並ぶ）\t誤答（誤答数は自由に増やせる）
+1\t左上のチェックボックスで、問題にマークできます。現在は、この問題にだけチェックが付いている状態です。問題一覧からも切り替え可能です。\t\t動作確認ができた！\t誤答（最終画面で誤答問題にまとめてチェックもできます）\t
+0\tこの問題の答えは「○」です。\t正解を「○」「✕」などにした問題は正誤問題として認識され、「○」「✕」が選択肢となります。\t○`;
 
 let dataset = [];
 let order = [];          // index order to traverse (1..n by No)
@@ -849,29 +898,49 @@ function parseDataset(raw, hasHeader, hasExplain){
 
   const dataRows = hasHeader ? lines.slice(1) : lines;
   const list = [];
+  const newCheckMap = {};
+
   dataRows.forEach(line => {
     const cols = line.split(delim).map(c => c.trim());
-    const question = cols[0];
+
+    // 1列目が 0/1 のときはチェック列あり
+    let offset = 0;
+    let checkVal = false;
+    if (cols[0] === '0' || cols[0] === '1') {
+      checkVal = cols[0] === '1';
+      offset = 1;
+    }
+
+    const question = cols[offset + 0];
     if (!question) return;
     let explanation = '', answer = '', dummies = [];
     if (hasExplain) {
-      explanation = cols[1] || '';
-      answer      = cols[2] || '';
-      dummies     = cols.slice(3).filter(c => c !== '');
+      explanation = cols[offset + 1] || '';
+      answer      = cols[offset + 2] || '';
+      dummies     = cols.slice(offset + 3).filter(c => c !== '');
     } else {
-      answer  = cols[1] || '';
-      dummies = cols.slice(2).filter(c => c !== '');
+      answer  = cols[offset + 1] || '';
+      dummies = cols.slice(offset + 2).filter(c => c !== '');
     }
     if (!answer) return;
-    list.push({
-      no: String(list.length + 1),
-      question,
-      explanation,
-      answer,
-      dummies
-    });
+
+    const no = String(list.length + 1);
+    newCheckMap[no] = checkVal;
+    list.push({ no, question, explanation, answer, dummies });
   });
+
   if (list.length === 0) throw new Error('有効な問題行が見つかりませんでした。列の並びを確認してください。');
+
+  // チェック列があったデータならcheckMapを上書き
+  const hasCheckCol = dataRows.some(line => {
+    const c = line.split(delim)[0].trim();
+    return c === '0' || c === '1';
+  });
+  if (hasCheckCol) {
+    checkMap = newCheckMap;
+    saveCheckMap();
+  }
+
   return list;
 }
 
@@ -1204,8 +1273,8 @@ function openEditor(){
     const raw = localStorage.getItem(DATA_KEY);
     if (raw) {
       const ds = JSON.parse(raw);
-      const header = '問題\t解説\t正解\t誤答1\t誤答2';
-      const rows = ds.map(q => [q.question, q.explanation||'', q.answer, ...q.dummies].join('\t'));
+      const header = 'チェック\t問題\t解説\t正解\t誤答1\t誤答2';
+      const rows = ds.map(q => [checkMap[q.no] ? '1' : '0', q.question, q.explanation||'', q.answer, ...q.dummies].join('\t'));
       dataInput.value = [header, ...rows].join('\n');
     } else {
       dataInput.value = SAMPLE_TSV;
@@ -1267,8 +1336,8 @@ function openEditor(){
   document.getElementById('exportSetBtn').onclick = () => {
     const checked = dataset.filter(q => checkMap[q.no]);
     if (checked.length === 0) { document.getElementById('setMsg').textContent='チェックが付いている問題がありません'; document.getElementById('setMsg').className='editor-msg err'; return; }
-    const header = '問題\t解説\t正解\t誤答1\t誤答2';
-    const rows = checked.map(q => [q.question, q.explanation||'', q.answer, ...q.dummies].join('\t'));
+    const header = 'チェック\t問題\t解説\t正解\t誤答1\t誤答2';
+    const rows = checked.map(q => ['1', q.question, q.explanation||'', q.answer, ...q.dummies].join('\t'));
     const tsv = [header, ...rows].join('\n');
     const blob = new Blob([tsv], { type: 'text/tab-separated-values' });
     const a = document.createElement('a');
