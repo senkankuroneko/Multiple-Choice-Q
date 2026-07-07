@@ -581,23 +581,28 @@
     cursor:pointer;
     margin-right:6px;
     vertical-align:middle;
+    padding:4px;          /* 当たり判定を一回り大きく */
+    margin:-4px;          /* パディング分のレイアウトずれを打ち消す */
+    border-radius:6px;
   }
   .check-label input[type="checkbox"]{
     display:none;
   }
   .check-mark{
-    width:17px;height:17px;
+    width:20px;height:20px;   /* 17px → 20px */
     border:2px solid var(--border);
-    border-radius:4px;
+    border-radius:5px;
     background:var(--panel-2);
     display:inline-flex;align-items:center;justify-content:center;
-    font-size:12px;
-    color:var(--accent);
+    font-size:13px;
+    color:#fff;
     transition:border-color .15s,background .15s;
+    flex-shrink:0;
   }
+  .check-label:hover .check-mark{border-color:var(--accent);}
   .check-label input:checked + .check-mark{
     border-color:var(--accent);
-    background:var(--accent-dim);
+    background:var(--accent);   /* 塗りつぶしで視認性を上げる */
   }
   .check-label input:checked + .check-mark::after{
     content:'✓';
@@ -606,23 +611,24 @@
   /* サイドバーのチェックボタン */
   .stub-ck-btn{
     flex-shrink:0;
-    width:18px;height:18px;
+    width:20px;height:20px;
     border:1px solid var(--border);
     border-radius:4px;
     background:var(--panel);
     color:transparent;
-    font-size:11px;
+    font-size:12px;
     line-height:1;
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;
     transition:border-color .15s,background .15s,color .15s;
     padding:0;
+    margin-right:6px;   /* テキストとの間隔を追加 */
   }
   .stub-ck-btn:hover{border-color:var(--accent);color:var(--accent);}
   .stub-ck-btn.checked{
     border-color:var(--accent);
-    background:var(--accent-dim);
-    color:var(--accent);
+    background:var(--accent);   /* 塗りつぶし */
+    color:#fff;
   }
   .stub.is-checked{
     border-color:#3a5080;
@@ -1086,13 +1092,25 @@ function loadCheckMap(){
 function toggleCheck(no){
   checkMap[no] = !checkMap[no];
   saveCheckMap();
-  // サイドバーのスタブ更新
+  const val = checkMap[no];
+
+  // サイドバースタブ更新
   const stub = document.getElementById(`stub-${no}`);
   if (stub) {
-    if (checkMap[no]) stub.classList.add('is-checked');
-    else stub.classList.remove('is-checked');
+    stub.classList.toggle('is-checked', val);
+    const ckBtn = stub.querySelector('.stub-ck-btn');
+    if (ckBtn) {
+      ckBtn.classList.toggle('checked', val);
+      ckBtn.textContent = val ? '✓' : '　';
+    }
   }
-  // チェックモードボタン更新
+
+  // カードのチェックボックス更新（問題一覧側からトグルされた場合）
+  const cardCk = document.querySelector('.q-checkbox');
+  if (cardCk && cardCk.dataset.no === no) {
+    cardCk.checked = val;
+  }
+
   updateCheckModeBtn();
 }
 function updateCheckModeBtn(){
@@ -1473,7 +1491,7 @@ function renderCard(idx){
           ${incorrectCount > 0 ? `<span class="es-incorrect">誤答 ${incorrectCount}</span>` : ''}
         </p>
         ${reviewBtnHtml}
-        <p class="end-hint">サイドバーから各問題を個別に振り返れます</p>
+        <p class="end-hint">問題一覧から各問題を個別に振り返れます</p>
       </div>`;
 
     if (incorrectCount > 0) {
