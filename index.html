@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ｎ択問題演習</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14171c;
+    --panel:#1c2128;
+    --panel-2:#20252d;
+    --border:#2b3139;
+    --text:#e7eaf0;
+    --muted:#8b93a3;
+    --accent:#5b7cfa;
+    --accent-dim:#2a335c;
+    --correct:#2f9e58;
+    --correct-dim:#163d27;
+    --incorrect:#e25555;
+    --incorrect-dim:#4a1f1f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(900px 500px at 15% -10%, #1b2030 0%, transparent 60%),
+      radial-gradient(700px 400px at 110% 10%, #1a2436 0%, transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:32px 16px 60px;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .display{font-family:'Outfit',sans-serif;}
+
+  .app{
+    width:100%;
+    max-width:920px;
+  }
+
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:18px;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .brand .mark{
+    font-family:'Outfit',sans-serif;
+    font-weight:800;
+    font-size:20px;
+    letter-spacing:.02em;
+  }
+  .brand .sub{
+    color:var(--muted);
+    font-size:12.5px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .topbar-actions{
+    display:flex;
+    gap:8px;
+  }
+  .btn{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text);
+    padding:9px 14px;
+    cursor:pointer;
+    transition:background .15s,border-color .15s,transform .1s;
+  }
+  .btn:hover{background:var(--panel-2);border-color:#3a4250;}
+  .btn:active{transform:translateY(1px);}
+  .btn-ghost{background:transparent;}
+  .btn-accent{background:var(--accent);border-color:var(--accent);color:#0d1117;}
+  .btn-accent:hover{background:#7191ff;}
+
+  .layout{
+    display:flex;
+    gap:18px;
+    align-items:stretch;
+  }
+
+  /* main card */
+  .card{
+    flex:1;
+    min-width:0;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:26px 28px 22px;
+    display:flex;
+    flex-direction:column;
+    height:600px;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
+    overflow:hidden;
+  }
+
+  .progress-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .progress-track{
+    flex:1;
+    height:6px;
+    border-radius:99px;
+    background:var(--panel-2);
+    overflow:hidden;
+    border:1px solid var(--border);
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--accent),#8aa3ff);
+    border-radius:99px;
+    transition:width .35s ease;
+    width:0%;
+  }
+  .progress-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+
+  .qno{
+    font-family:'JetBrains Mono',monospace;
+    color:var(--accent);
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:.04em;
+    margin-bottom:8px;
+  }
+  .qno-total{color:var(--muted);font-weight:500;}
+
+  .quiz-body{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    overflow-y:auto;
+  }
+
+  .card-bottom{
+    flex-shrink:0;
+  }
+
+  .question-text{
+    font-family:'Outfit',sans-serif;
+    font-weight:600;
+    font-size:21px;
+    line-height:1.5;
+    margin:0 0 16px;
+    max-height:120px;
+    overflow-y:auto;
+    padding-right:4px;
+  }
+
+  .image-wrap{
+    width:100%;
+    max-height:180px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin-bottom:14px;
+  }
+  .image-wrap img{
+    max-width:100%;
+    max-height:180px;
+    border-radius:10px;
+    object-fit:contain;
+    border:1px solid var(--border);
+  }
+  .image-wrap.hidden{display:none;}
+  .hidden{display:none!important;}
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+    max-height:300px;
+    overflow-y:auto;
+    padding-right:4px;
+  }
+  .opt{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    text-align:left;
+    width:100%;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    border-radius:10px;
+    padding:13px 14px;
+    font-size:14.5px;
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+    transition:background .15s,border-color .15s;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .opt .tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--muted);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:2px 6px;
+    flex-shrink:0;
+  }
+  .opt:hover:not(:disabled){border-color:#5a6275;background:#2d3442;}
+  .opt.correct:hover:not(:disabled){background:#235c32;border-color:#5dcf7a;}
+  .opt:disabled{cursor:default;}
+  .opt.selected{background:var(--accent-dim);border-color:var(--accent);}
+  .opt.selected:hover:not(:disabled){background:#303d6e;border-color:#7191ff;}
+  .opt.selected .tag{border-color:var(--accent);color:var(--accent);}
+  .opt.correct{background:var(--correct-dim);border-color:var(--correct);color:#dff7e6;}
+  .opt.correct .tag{border-color:var(--correct);color:var(--correct);}
+  .opt.incorrect{background:var(--incorrect-dim);border-color:var(--incorrect);color:#ffe3e3;}
+  .opt.incorrect .tag{border-color:var(--incorrect);color:var(--incorrect);}
+
+  .nav-row{
+    display:flex;
+    align-items:stretch;
+    gap:10px;
+    margin-top:18px;
+  }
+  .btn-nav{
+    flex-shrink:0;
+    width:44px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    font-size:17px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .15s,border-color .15s,opacity .15s;
+  }
+  .btn-nav:hover:not(:disabled){background:#2a3040;border-color:#3a4355;}
+  .btn-nav:disabled{opacity:.25;cursor:default;pointer-events:none;}
+
+  .explanation-box{
+    margin-top:10px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-left:3px solid var(--accent);
+    border-radius:0 8px 8px 0;
+    padding:10px 13px;
+    font-size:13.5px;
+    line-height:1.7;
+    color:#c8d0e0;
+    white-space:pre-wrap;
+    word-break:break-all;
+    max-height:120px;
+    overflow-y:auto;
+  }
+
+  .btn.active{
+    background:var(--accent-dim);
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+
+  .empty-state{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    color:var(--muted);
+    text-align:center;
+  }
+  .empty-state .display{font-size:18px;color:var(--text);}
+
+  /* end screen */
+  .end-screen{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:10px 0;
+  }
+  .end-score-ring{
+    position:relative;
+    width:88px;height:88px;
+    margin-bottom:4px;
+  }
+  .end-score-ring svg{width:100%;height:100%;}
+  .end-score-label{
+    position:absolute;
+    inset:0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .end-pct{
+    font-family:'Outfit',sans-serif;
+    font-weight:800;
+    font-size:22px;
+    color:var(--text);
+  }
+  .end-pct small{font-size:13px;font-weight:600;color:var(--muted);}
+  .end-title{
+    margin:0;
+    font-size:20px;
+    font-weight:700;
+    color:var(--text);
+  }
+  .end-stats{
+    display:flex;align-items:center;gap:8px;
+    margin:0;
+    font-size:14px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .es-correct{color:var(--correct);font-weight:600;}
+  .es-incorrect{color:var(--incorrect);font-weight:600;margin-left:6px;}
+  .es-sep,.es-total{color:var(--muted);}
+  .btn-review-incorrect{
+    margin-top:6px;
+    display:flex;align-items:center;gap:8px;
+    background:var(--incorrect-dim);
+    border:1px solid var(--incorrect);
+    color:#ffe3e3;
+    font-family:'Outfit',sans-serif;
+    font-weight:700;
+    font-size:14.5px;
+    border-radius:10px;
+    padding:12px 22px;
+    cursor:pointer;
+    transition:background .15s,border-color .15s;
+  }
+  .btn-review-incorrect:hover{background:#612828;border-color:#f07070;}
+  .ri-icon{font-size:16px;line-height:1;}
+  .all-correct-msg{
+    color:var(--correct);
+    font-family:'Outfit',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    margin:6px 0 0;
+  }
+  .end-hint{
+    color:var(--muted);
+    font-size:12.5px;
+    margin:4px 0 0;
+    text-align:center;
+  }
+
+  /* sidebar — ticket stub style */
+  .sidebar{
+    width:208px;
+    flex-shrink:0;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:18px 14px;
+    display:flex;
+    flex-direction:column;
+    height:fit-content;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
+  }
+  .sidebar-head{
+    font-family:'Outfit',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    padding-bottom:12px;
+    margin-bottom:10px;
+    border-bottom:1px dashed var(--border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .sidebar-head .count{
+    font-family:'JetBrains Mono',monospace;
+    color:var(--muted);
+    font-size:11.5px;
+  }
+  .stub-list{
+    max-height:400px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    padding-right:2px;
+  }
+  .stub{
+    position:relative;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    border-radius:8px;
+    padding:8px 10px 8px 14px;
+    cursor:pointer;
+    transition:background .15s,border-color .15s;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .stub::before{
+    content:"";
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:4px;
+    border-radius:8px 0 0 8px;
+    background:var(--border);
+  }
+  .stub .num{
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    font-weight:500;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    flex:1;
+    min-width:0;
+  }
+  .stub .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--muted);
+    opacity:.5;
+  }
+  .stub:hover{background:#2a3040;border-color:#3a4355;}
+  .stub.current{border-color:var(--accent);background:var(--accent-dim);}
+  .stub.current:hover{background:#303d6e;}
+  .stub.current::before{background:var(--accent);}
+  .stub.current .dot{background:var(--accent);opacity:1;}
+  .stub.is-correct{border-color:var(--correct);background:var(--correct-dim);}
+  .stub.is-correct:hover{background:#1e5230;border-color:#5dcf7a;}
+  .stub.is-correct::before{background:var(--correct);}
+  .stub.is-correct .dot{background:var(--correct);opacity:1;}
+  .stub.is-incorrect{border-color:var(--incorrect);background:var(--incorrect-dim);}
+  .stub.is-incorrect:hover{background:#612828;border-color:#f07070;}
+  .stub.is-incorrect::before{background:var(--incorrect);}
+  .stub.is-incorrect .dot{background:var(--incorrect);opacity:1;}
+  .stub.locked{cursor:not-allowed;opacity:.55;}
+  .btn-sidebar-review{
+    margin-top:10px;
+    width:100%;
+    background:var(--incorrect-dim);
+    border:1px solid var(--incorrect);
+    color:#ffe3e3;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+    border-radius:8px;
+    padding:9px 10px;
+    cursor:pointer;
+    transition:background .15s,border-color .15s;
+    flex-shrink:0;
+  }
+  .btn-sidebar-review:hover{background:#612828;border-color:#f07070;}
+  .btn-sidebar-review.hidden{display:none!important;}
+
+  /* paste/edit panel */
+  .editor-overlay{
+    position:fixed; inset:0;
+    background:rgba(8,10,14,.7);
+    display:flex; align-items:center; justify-content:center;
+    z-index:50;
+    padding:20px;
+  }
+  .editor-overlay.hidden{display:none;}
+  .editor-panel{
+    width:100%; max-width:680px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:24px;
+    max-height:88vh;
+    overflow-y:auto;
+  }
+  .editor-panel h2{
+    font-family:'Outfit',sans-serif;
+    margin:0 0 6px;
+    font-size:19px;
+  }
+  .editor-panel p.hint{
+    color:var(--muted);
+    font-size:13px;
+    line-height:1.6;
+    margin:0 0 14px;
+  }
+  .editor-panel textarea{
+    width:100%;
+    min-height:220px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    padding:12px;
+    resize:vertical;
+    line-height:1.6;
+  }
+  .editor-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:14px;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .editor-msg{
+    font-size:12.5px;
+    color:var(--muted);
+    font-family:'JetBrains Mono',monospace;
+  }
+  .editor-msg.err{color:var(--incorrect);}
+  .editor-msg.ok{color:var(--correct);}
+
+  .image-manager{
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px dashed var(--border);
+  }
+  .image-manager h3{
+    font-family:'Outfit',sans-serif;
+    font-size:15px;
+    margin:0 0 6px;
+  }
+  .image-manager-row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+  .image-manager-row select{
+    background:var(--panel-2);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:12.5px;
+  }
+  .image-manager-row input[type="file"]{
+    font-size:12.5px;
+    color:var(--muted);
+    max-width:220px;
+  }
+  .image-preview-wrap{
+    margin-top:12px;
+    min-height:60px;
+  }
+  .image-preview-wrap img{
+    max-width:160px;
+    max-height:120px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    object-fit:contain;
+  }
+  .image-preview-wrap .none{
+    color:var(--muted);
+    font-size:12.5px;
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  /* チェックボックス */
+  .check-label{
+    display:inline-flex;
+    align-items:center;
+    cursor:pointer;
+    margin-right:6px;
+    vertical-align:middle;
+  }
+  .check-label input[type="checkbox"]{
+    display:none;
+  }
+  .check-mark{
+    width:17px;height:17px;
+    border:2px solid var(--border);
+    border-radius:4px;
+    background:var(--panel-2);
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:12px;
+    color:var(--accent);
+    transition:border-color .15s,background .15s;
+  }
+  .check-label input:checked + .check-mark{
+    border-color:var(--accent);
+    background:var(--accent-dim);
+  }
+  .check-label input:checked + .check-mark::after{
+    content:'✓';
+  }
+
+  /* サイドバーのチェックボタン */
+  .stub-ck-btn{
+    flex-shrink:0;
+    width:18px;height:18px;
+    border:1px solid var(--border);
+    border-radius:4px;
+    background:var(--panel);
+    color:transparent;
+    font-size:11px;
+    line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    transition:border-color .15s,background .15s,color .15s;
+    padding:0;
+  }
+  .stub-ck-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .stub-ck-btn.checked{
+    border-color:var(--accent);
+    background:var(--accent-dim);
+    color:var(--accent);
+  }
+  .stub.is-checked{
+    border-color:#3a5080;
+  }
+  .stub.is-checked::before{
+    background:var(--accent);
+    opacity:.5;
+  }
+
+  .import-row{
+    margin-bottom:12px;
+  }
+  .drop-zone{
+    border:2px dashed var(--border);
+    border-radius:10px;
+    padding:16px 20px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    transition:border-color .15s,background .15s;
+    background:var(--panel-2);
+  }
+  .drop-zone.drag-over{
+    border-color:var(--accent);
+    background:var(--accent-dim);
+  }
+  .drop-zone-text{
+    font-size:13px;
+    color:var(--muted);
+  }
+  .drop-zone-or{
+    font-size:12px;
+    color:var(--border);
+  }
+  .import-label{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:7px 14px;
+    font-size:13px;
+    cursor:pointer;
+    color:var(--text);
+    transition:border-color .15s,background .15s;
+  }
+  .import-label:hover{border-color:#3a4250;background:#262c35;}
+  .import-label input[type="file"]{display:none;}
+
+  @media (max-width:760px){
+    .layout{flex-direction:column;}
+    .sidebar{width:100%;min-height:auto;max-height:220px;}
+    .card{min-height:auto;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <span class="mark">ｎ択問題演習</span>
+      <span class="sub">SELF-STUDY DECK</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" id="checkModeBtn">☑ チェック問題のみ</button>
+      <button class="btn btn-ghost" id="shuffleBtn">シャッフル</button>
+      <button class="btn btn-ghost" id="editBtn">問題を編集</button>
+      <button class="btn" id="resetBtn">最初から</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="card" id="cardEl">
+      <!-- filled by JS -->
+    </div>
+    <div class="sidebar">
+      <div class="sidebar-head">
+        <span>問題一覧</span>
+        <span class="count" id="sidebarCount">0/0</span>
+      </div>
+      <div class="stub-list" id="stubList"></div>
+      <button class="btn-sidebar-review hidden" id="sidebarReviewBtn">✕ 誤答を復習</button>
+    </div>
+  </div>
+</div>
+
+<div class="editor-overlay hidden" id="editorOverlay">
+  <div class="editor-panel">
+    <h2 class="display">問題データを編集</h2>
+    <p class="hint">
+      タブ区切り（スプレッドシートからのコピペ）またはカンマ区切り<br>
+      列の並び：<b>問題文, 解説</b>(任意)<b>, 正解, 誤答1, 誤答2, ...</b>（誤答は何列でも追加可）<br>
+      解説を省く場合は列ごと省略可。正解の直後から誤答列として扱う。
+    </p>
+    <div class="import-row">
+      <div class="drop-zone" id="dropZone">
+        <span class="drop-zone-text">ここにファイルをドロップ（.tsv, .csv, .txt）</span>
+        <span class="drop-zone-or">または</span>
+        <label class="import-label">
+          ファイルを選択
+          <input type="file" id="importFileInput" accept=".tsv,.csv,.txt">
+        </label>
+      </div>
+      <span class="editor-msg" id="importMsg"></span>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;font-size:13px;color:var(--muted);">
+      <input type="checkbox" id="hasHeaderCk" checked style="accent-color:var(--accent);width:15px;height:15px;">
+      1行目をヘッダーとして無視する
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;font-size:13px;color:var(--muted);">
+      <input type="checkbox" id="hasExplainCk" checked style="accent-color:var(--accent);width:15px;height:15px;">
+      2列目を解説として読み込む（OFFにすると 問題, 正解, 誤答... の列順になる）
+    </label>
+    <textarea id="dataInput" spellcheck="false"></textarea>
+    <div class="editor-footer">
+      <span class="editor-msg" id="editorMsg"></span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" id="loadSampleBtn">サンプルを挿入</button>
+        <button class="btn btn-ghost" id="cancelEditBtn">キャンセル</button>
+        <button class="btn btn-accent" id="applyBtn">この内容で開始</button>
+      </div>
+    </div>
+
+    <div class="image-manager">
+      <h3 class="display">チェック済み問題セットを保存</h3>
+      <p class="hint">現在チェックが付いている問題を名前付きで保存したり、TSVとしてエクスポートできます。</p>
+      <div class="image-manager-row" style="flex-wrap:wrap;gap:8px;">
+        <input type="text" id="setNameInput" placeholder="セット名を入力" style="flex:1;min-width:120px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;">
+        <button class="btn btn-ghost" id="saveSetBtn">保存</button>
+        <button class="btn btn-ghost" id="exportSetBtn">TSVエクスポート</button>
+      </div>
+      <div id="savedSetsList" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;"></div>
+      <div class="editor-msg" id="setMsg" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="image-manager">
+      <h3 class="display">画像を割り当て（任意）</h3>
+      <p class="hint">
+        問題Noを選んで画像ファイルを選択すると、Base64として端末内に保存されます（完全オフライン）。<br>
+        ファイルサイズが大きいと保存容量を圧迫するため、1枚あたり数百KB程度を推奨します。
+      </p>
+      <div class="image-manager-row">
+        <select id="imgNoSelect" class="mono"></select>
+        <input type="file" id="imgFileInput" accept="image/*">
+        <button class="btn btn-ghost" id="clearImgBtn">この問題の画像を削除</button>
+      </div>
+      <div class="image-preview-wrap" id="imagePreviewWrap"></div>
+      <div class="editor-msg" id="imgMsg" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'nquiz_progress_v1';
+const DATA_KEY = 'nquiz_dataset_v1';
+const IMG_KEY = 'nquiz_images_v1';
+const CHECK_KEY = 'nquiz_checks_v1';
+const SETS_KEY  = 'nquiz_sets_v1';
+
+const SAMPLE_TSV =
+`問題\t解説\t正解\t誤答1\t誤答2\t誤答3
+日本で一番高い山は?\t標高3776m。富士山は山梨県と静岡県にまたがる成層火山。\t富士山\t北岳\t穂高岳\t立山
+「火曜日」を英語で言うと?\tTuesdayはローマ神話の軍神Marsに由来。各曜日はそれぞれ惑星・神に対応。\tTuesday\tThursday\tWednesday\tSaturday
+【光の三原色は「赤・黄・青」である。】\t光の三原色はRed・Green・Blue（RGB）。「赤・黄・青」は色料（絵の具）の三原色。\t×`;
+
+let dataset = [];
+let order = [];          // index order to traverse (1..n by No)
+let progressIndex = 0;   // furthest unanswered position
+let viewIndex = 0;
+let answeredOnce = false;
+let pendingSelection = null;
+let statusMap = {};      // keyed by quiz.no -> {status, shuffled, selected}
+let imageMap = {};       // keyed by quiz.no -> base64 data URL
+let reviewQueue = [];    // indices of incorrect questions during review mode
+let isReviewMode = false;
+let savedProgressIndex = 0;
+let isShuffled = false;
+let originalOrder = [];
+let checkMap = {};       // keyed by quiz.no -> bool
+let isCheckMode = false; // チェック済み問題のみ演習モード
+let fullDataset = [];    // チェックモード前のフルデータセット退避用
+
+const cardEl = document.getElementById('cardEl');
+const stubList = document.getElementById('stubList');
+const sidebarCount = document.getElementById('sidebarCount');
+const editorOverlay = document.getElementById('editorOverlay');
+const dataInput = document.getElementById('dataInput');
+const editorMsg = document.getElementById('editorMsg');
+const imgNoSelect = document.getElementById('imgNoSelect');
+const imgFileInput = document.getElementById('imgFileInput');
+const imagePreviewWrap = document.getElementById('imagePreviewWrap');
+const imgMsg = document.getElementById('imgMsg');
+const clearImgBtn = document.getElementById('clearImgBtn');
+
+document.getElementById('editBtn').onclick = openEditor;
+document.getElementById('sidebarReviewBtn').onclick = startIncorrectReview;
+document.getElementById('shuffleBtn').onclick = toggleShuffle;
+document.getElementById('checkModeBtn').onclick = toggleCheckMode;
+document.getElementById('cancelEditBtn').onclick = closeEditor;
+document.getElementById('loadSampleBtn').onclick = () => dataInput.value = SAMPLE_TSV;
+document.getElementById('applyBtn').onclick = applyEditorData;
+document.getElementById('resetBtn').onclick = () => {
+  if (confirm('進捗をすべてリセットして最初の問題から始めますか？')) restart(true);
+};
+imgNoSelect.onchange = renderImagePreview;
+clearImgBtn.onclick = () => {
+  const no = imgNoSelect.value;
+  if (!no) return;
+  delete imageMap[no];
+  saveImageMap();
+  renderImagePreview();
+  imgMsg.textContent = `No.${no} の画像を削除しました。`;
+  imgMsg.className = 'editor-msg ok';
+};
+imgFileInput.onchange = handleImageUpload;
+
+function parseDataset(raw, hasHeader, hasExplain){
+  const delim = raw.includes('\t') ? '\t' : ',';
+  const lines = raw.split(/\r?\n/).filter(l => l.trim() !== '');
+  if (lines.length < (hasHeader ? 2 : 1)) throw new Error('データが不足しています（最低1行が必要）。');
+
+  const dataRows = hasHeader ? lines.slice(1) : lines;
+  const list = [];
+  dataRows.forEach(line => {
+    const cols = line.split(delim).map(c => c.trim());
+    const question = cols[0];
+    if (!question) return;
+    let explanation = '', answer = '', dummies = [];
+    if (hasExplain) {
+      explanation = cols[1] || '';
+      answer      = cols[2] || '';
+      dummies     = cols.slice(3).filter(c => c !== '');
+    } else {
+      answer  = cols[1] || '';
+      dummies = cols.slice(2).filter(c => c !== '');
+    }
+    if (!answer) return;
+    list.push({
+      no: String(list.length + 1),
+      question,
+      explanation,
+      answer,
+      dummies
+    });
+  });
+  if (list.length === 0) throw new Error('有効な問題行が見つかりませんでした。列の並びを確認してください。');
+  return list;
+}
+
+function shuffle(arr){
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function saveDataset(){
+  try { localStorage.setItem(DATA_KEY, JSON.stringify(dataset)); } catch(e){}
+}
+function saveImageMap(){
+  try { localStorage.setItem(IMG_KEY, JSON.stringify(imageMap)); }
+  catch(e){
+    imgMsg.textContent = '保存に失敗しました（容量超過の可能性）。画像サイズを小さくしてください。';
+    imgMsg.className = 'editor-msg err';
+  }
+}
+function loadImageMap(){
+  try {
+    const raw = localStorage.getItem(IMG_KEY);
+    imageMap = raw ? JSON.parse(raw) : {};
+  } catch(e){ imageMap = {}; }
+}
+function handleImageUpload(){
+  const no = imgNoSelect.value;
+  const file = imgFileInput.files[0];
+  if (!no || !file) return;
+  if (file.size > 1.5 * 1024 * 1024) {
+    imgMsg.textContent = 'ファイルが大きすぎます（1.5MB以下を推奨）。';
+    imgMsg.className = 'editor-msg err';
+    imgFileInput.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    imageMap[no] = reader.result;
+    saveImageMap();
+    renderImagePreview();
+    imgMsg.textContent = `No.${no} に画像を設定しました。`;
+    imgMsg.className = 'editor-msg ok';
+    imgFileInput.value = '';
+  };
+  reader.onerror = () => {
+    imgMsg.textContent = '画像の読み込みに失敗しました。';
+    imgMsg.className = 'editor-msg err';
+  };
+  reader.readAsDataURL(file);
+}
+function populateImgNoSelect(){
+  imgNoSelect.innerHTML = dataset.map((q, i) => {
+    const label = q.question.length > 20 ? q.question.slice(0, 20) + '…' : q.question;
+    return `<option value="${escapeHtml(q.no)}">Q${i + 1}: ${escapeHtml(label)}</option>`;
+  }).join('');
+  renderImagePreview();
+}
+function renderImagePreview(){
+  const no = imgNoSelect.value;
+  const url = imageMap[no];
+  imagePreviewWrap.innerHTML = url
+    ? `<img src="${url}" alt="">`
+    : `<span class="none">この問題には画像が設定されていません</span>`;
+}
+function saveProgress(){
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      statusMap, progressIndex
+    }));
+  } catch(e){}
+}
+function loadProgress(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    if (!parsed.statusMap) return false;
+    statusMap = parsed.statusMap;
+    progressIndex = parsed.progressIndex || 0;
+    return true;
+  } catch(e){ return false; }
+}
+
+// ○✕問題の判定：正解・誤答の全選択肢が○か✕のバリエーションのみで構成されているか
+const TF_MARU = ['○', '〇', 'まる', '正', '◯'];
+const TF_BATSU = ['✕', '×', 'ばつ', '誤', 'バツ'];
+const TF_ALL = [...TF_MARU, ...TF_BATSU];
+
+// ○✕問題の判定：正解が○か✕のバリエーションであれば○✕問題とみなす
+function isTrueFalse(q){
+  return TF_ALL.includes(q.answer.trim());
+}
+
+// ○✕問題のとき、固定順（○→✕）で返す（誤答列の有無を問わない）
+function normalizeTrueFalseOpts(q){
+  return ['○', '✕'];
+}
+
+// ○✕問題のとき、元の正解値が○系か✕系かを判定して正規化した値を返す
+function normalizeTFAnswer(answer){
+  const v = answer.trim();
+  if (TF_MARU.includes(v)) return '○';
+  if (TF_BATSU.includes(v)) return '✕';
+  return answer;
+}
+
+function initStatusMap(){
+  statusMap = {};
+  dataset.forEach(q => {
+    let opts;
+    if (isTrueFalse(q)) {
+      opts = normalizeTrueFalseOpts(q); // 固定順・正規化済み
+    } else {
+      opts = [q.answer, ...q.dummies];
+      shuffle(opts);
+    }
+    statusMap[q.no] = { status: 'unanswered', shuffled: opts, selected: null };
+  });
+}
+
+function restart(clearStorage){
+  if (clearStorage) {
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+  }
+  initStatusMap();
+  progressIndex = 0;
+  viewIndex = 0;
+  saveProgress();
+  renderSidebar();
+  renderCard(0);
+}
+
+function saveCheckMap(){
+  try { localStorage.setItem(CHECK_KEY, JSON.stringify(checkMap)); } catch(e){}
+}
+function loadCheckMap(){
+  try {
+    const raw = localStorage.getItem(CHECK_KEY);
+    checkMap = raw ? JSON.parse(raw) : {};
+  } catch(e){ checkMap = {}; }
+}
+function toggleCheck(no){
+  checkMap[no] = !checkMap[no];
+  saveCheckMap();
+  // サイドバーのスタブ更新
+  const stub = document.getElementById(`stub-${no}`);
+  if (stub) {
+    if (checkMap[no]) stub.classList.add('is-checked');
+    else stub.classList.remove('is-checked');
+  }
+  // チェックモードボタン更新
+  updateCheckModeBtn();
+}
+function updateCheckModeBtn(){
+  const btn = document.getElementById('checkModeBtn');
+  if (!btn) return;
+  const n = dataset.filter(q => checkMap[q.no]).length;
+  if (isCheckMode) {
+    btn.classList.add('active');
+    btn.textContent = `☑ チェックモード中 (${n})`;
+  } else {
+    btn.classList.remove('active');
+    btn.textContent = n > 0 ? `☑ チェック問題のみ (${n})` : '☑ チェック問題のみ';
+  }
+}
+function toggleCheckMode(){
+  const checked = dataset.filter(q => checkMap[q.no]);
+  if (!isCheckMode) {
+    if (checked.length === 0) {
+      alert('チェックが付いている問題がありません。');
+      return;
+    }
+    if (!confirm(`チェック済み ${checked.length} 問のみで演習を開始しますか？`)) return;
+    fullDataset = dataset;
+    dataset = checked.map((q, i) => ({ ...q, no: String(i + 1) }));
+    isCheckMode = true;
+  } else {
+    dataset = fullDataset;
+    isCheckMode = false;
+  }
+  updateCheckModeBtn();
+  restart(true);
+}
+function markIncorrectChecked(){
+  // 誤答問題すべてにチェックを付ける
+  let count = 0;
+  dataset.forEach(q => {
+    if (statusMap[q.no] && statusMap[q.no].status === 'incorrect') {
+      checkMap[q.no] = true;
+      count++;
+    }
+  });
+  saveCheckMap();
+  renderSidebar();
+  updateCheckModeBtn();
+  return count;
+}
+
+// セット保存・ロード・エクスポート
+function loadSavedSets(){
+  try {
+    const raw = localStorage.getItem(SETS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e){ return {}; }
+}
+function saveSetToStorage(name, nos){
+  const sets = loadSavedSets();
+  sets[name] = nos;
+  try { localStorage.setItem(SETS_KEY, JSON.stringify(sets)); } catch(e){}
+}
+function deleteSet(name){
+  const sets = loadSavedSets();
+  delete sets[name];
+  try { localStorage.setItem(SETS_KEY, JSON.stringify(sets)); } catch(e){}
+}
+function renderSavedSetsList(){
+  const container = document.getElementById('savedSetsList');
+  if (!container) return;
+  const sets = loadSavedSets();
+  const names = Object.keys(sets);
+  if (names.length === 0) {
+    container.innerHTML = `<div style="font-size:12.5px;color:var(--muted);">保存済みセットはありません</div>`;
+    return;
+  }
+  container.innerHTML = names.map(name => {
+    const nos = sets[name];
+    return `<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;">
+      <span style="flex:1;color:var(--text);">${escapeHtml(name)} <span style="color:var(--muted);">(${nos.length}問)</span></span>
+      <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="loadSet('${escapeHtml(name)}')">演習開始</button>
+      <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="applySetAsChecks('${escapeHtml(name)}')">チェックに適用</button>
+      <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;color:var(--incorrect);" onclick="deleteSetUI('${escapeHtml(name)}')">削除</button>
+    </div>`;
+  }).join('');
+}
+function loadSet(name){
+  const sets = loadSavedSets();
+  const nos = sets[name];
+  if (!nos) return;
+  // nos は元データの no 配列。fullDataset から該当問題を抽出
+  const src = isCheckMode ? fullDataset : dataset;
+  const filtered = src.filter(q => nos.includes(q.no));
+  if (filtered.length === 0) { alert('該当する問題が見つかりません（問題データが変更された可能性があります）'); return; }
+  if (!isCheckMode) fullDataset = dataset;
+  dataset = filtered.map((q, i) => ({ ...q, no: String(i + 1) }));
+  isCheckMode = true;
+  updateCheckModeBtn();
+  restart(true);
+  closeEditor();
+}
+function applySetAsChecks(name){
+  const sets = loadSavedSets();
+  const nos = sets[name];
+  if (!nos) return;
+  const src = isCheckMode ? fullDataset : dataset;
+  src.forEach(q => { checkMap[q.no] = nos.includes(q.no); });
+  saveCheckMap();
+  renderSidebar();
+  updateCheckModeBtn();
+  document.getElementById('setMsg').textContent = `「${name}」のチェックを適用しました。`;
+  document.getElementById('setMsg').className = 'editor-msg ok';
+}
+function deleteSetUI(name){
+  if (!confirm(`「${name}」を削除しますか？`)) return;
+  deleteSet(name);
+  renderSavedSetsList();
+}
+
+function toggleShuffle(){
+  const msg = isShuffled
+    ? 'シャッフルを解除すると回答はリセットされます。続けますか？'
+    : 'シャッフルすると回答はリセットされます。続けますか？';
+  if (!confirm(msg)) return;
+  isShuffled = !isShuffled;
+  const btn = document.getElementById('shuffleBtn');
+  if (isShuffled) {
+    // データセットをシャッフルして再スタート
+    const shuffled = [...dataset];
+    shuffle(shuffled);
+    // no を振り直して順番を保持
+    shuffled.forEach((q, i) => { q.no = String(i + 1); });
+    dataset = shuffled;
+    btn.classList.add('active');
+    btn.textContent = 'シャッフル中';
+  } else {
+    // 元の順序に戻す（保存データから再ロード）
+    try {
+      const raw = localStorage.getItem(DATA_KEY);
+      if (raw) dataset = JSON.parse(raw);
+    } catch(e){}
+    dataset.forEach((q, i) => { q.no = String(i + 1); });
+    btn.classList.remove('active');
+    btn.textContent = 'シャッフル';
+  }
+  restart(true);
+}
+
+function boot(){
+  let raw = null;
+  try { raw = localStorage.getItem(DATA_KEY); } catch(e){}
+  if (raw) {
+    try {
+      dataset = JSON.parse(raw);
+      // 旧データに explanation フィールドがない場合は補完
+      dataset.forEach(q => { if (q.explanation === undefined) q.explanation = ''; });
+    } catch(e){ dataset = null; }
+  }
+  if (!dataset || dataset.length === 0) {
+    dataset = parseDataset(SAMPLE_TSV, true, true);
+    saveDataset();
+  }
+  loadImageMap();
+  loadCheckMap();
+
+  const restored = loadProgress();
+  if (!restored || Object.keys(statusMap).length !== dataset.length) {
+    initStatusMap();
+    progressIndex = 0;
+  }
+  viewIndex = Math.min(progressIndex, dataset.length - 1);
+  renderSidebar();
+  renderCard(viewIndex);
+  updateCheckModeBtn();
+}
+
+function openEditor(){
+  dataInput.value = '';
+  try {
+    const raw = localStorage.getItem(DATA_KEY);
+    if (raw) {
+      const ds = JSON.parse(raw);
+      const header = '問題\t解説\t正解\t誤答1\t誤答2';
+      const rows = ds.map(q => [q.question, q.explanation||'', q.answer, ...q.dummies].join('\t'));
+      dataInput.value = [header, ...rows].join('\n');
+    } else {
+      dataInput.value = SAMPLE_TSV;
+    }
+  } catch(e) {
+    dataInput.value = SAMPLE_TSV;
+  }
+  editorMsg.textContent = '';
+  editorMsg.className = 'editor-msg';
+  imgMsg.textContent = '';
+  imgMsg.className = 'editor-msg';
+  document.getElementById('importMsg').textContent = '';
+
+  // ファイルインポート共通処理
+  function handleImportFile(file){
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      dataInput.value = e.target.result;
+      document.getElementById('importMsg').textContent = `「${file.name}」を読み込みました`;
+      document.getElementById('importMsg').className = 'editor-msg ok';
+    };
+    reader.onerror = () => {
+      document.getElementById('importMsg').textContent = 'ファイルの読み込みに失敗しました';
+      document.getElementById('importMsg').className = 'editor-msg err';
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  // ファイル選択
+  const importInput = document.getElementById('importFileInput');
+  importInput.value = '';
+  importInput.onchange = () => handleImportFile(importInput.files[0]);
+
+  // ドラッグ＆ドロップ
+  const dropZone = document.getElementById('dropZone');
+  dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('drag-over'); };
+  dropZone.ondragleave = () => dropZone.classList.remove('drag-over');
+  dropZone.ondrop = e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleImportFile(file);
+  };
+  populateImgNoSelect();
+  renderSavedSetsList();
+  // セット保存ボタンのワイヤリング（毎回付け直し）
+  document.getElementById('saveSetBtn').onclick = () => {
+    const name = document.getElementById('setNameInput').value.trim();
+    if (!name) { document.getElementById('setMsg').textContent='セット名を入力してください'; document.getElementById('setMsg').className='editor-msg err'; return; }
+    const nos = dataset.filter(q => checkMap[q.no]).map(q => q.no);
+    if (nos.length === 0) { document.getElementById('setMsg').textContent='チェックが付いている問題がありません'; document.getElementById('setMsg').className='editor-msg err'; return; }
+    saveSetToStorage(name, nos);
+    renderSavedSetsList();
+    document.getElementById('setNameInput').value = '';
+    document.getElementById('setMsg').textContent = `「${name}」を保存しました（${nos.length}問）`;
+    document.getElementById('setMsg').className = 'editor-msg ok';
+  };
+  document.getElementById('exportSetBtn').onclick = () => {
+    const checked = dataset.filter(q => checkMap[q.no]);
+    if (checked.length === 0) { document.getElementById('setMsg').textContent='チェックが付いている問題がありません'; document.getElementById('setMsg').className='editor-msg err'; return; }
+    const header = '問題\t解説\t正解\t誤答1\t誤答2';
+    const rows = checked.map(q => [q.question, q.explanation||'', q.answer, ...q.dummies].join('\t'));
+    const tsv = [header, ...rows].join('\n');
+    const blob = new Blob([tsv], { type: 'text/tab-separated-values' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'checked_questions.tsv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  editorOverlay.classList.remove('hidden');
+}
+function closeEditor(){
+  editorOverlay.classList.add('hidden');
+}
+function applyEditorData(){
+  try {
+    const hasHeader  = document.getElementById('hasHeaderCk').checked;
+    const hasExplain = document.getElementById('hasExplainCk').checked;
+    const parsed = parseDataset(dataInput.value, hasHeader, hasExplain);
+    dataset = parsed;
+    saveDataset();
+    restart(true);
+    editorMsg.textContent = `${parsed.length}問を読み込みました。`;
+    editorMsg.className = 'editor-msg ok';
+    setTimeout(closeEditor, 600);
+  } catch (e) {
+    editorMsg.textContent = e.message;
+    editorMsg.className = 'editor-msg err';
+  }
+}
+
+function answeredCount(){
+  return dataset.filter(q => statusMap[q.no].status !== 'unanswered').length;
+}
+
+function renderSidebar(){
+  stubList.innerHTML = '';
+  const answered = answeredCount();
+  const incorrectCount = dataset.filter(q => statusMap[q.no].status === 'incorrect').length;
+  sidebarCount.textContent = `${answered}/${dataset.length}`;
+  const reviewBtn = document.getElementById('sidebarReviewBtn');
+  if (incorrectCount > 0) {
+    reviewBtn.textContent = `✕ 誤答 ${incorrectCount}問を復習`;
+    reviewBtn.classList.remove('hidden');
+  } else {
+    reviewBtn.classList.add('hidden');
+  }
+  dataset.forEach((q, idx) => {
+    const rec = statusMap[q.no];
+    const div = document.createElement('div');
+    div.className = 'stub';
+    div.id = `stub-${q.no}`;
+    if (rec.status === 'correct') div.classList.add('is-correct');
+    if (rec.status === 'incorrect') div.classList.add('is-incorrect');
+
+    const locked = rec.status === 'unanswered'
+      && (isReviewMode ? !reviewQueue.includes(idx) : idx !== progressIndex);
+    if (locked) div.classList.add('locked');
+
+    const snippet = q.question.length > 12 ? q.question.slice(0, 12) + '…' : q.question;
+    const checked = !!checkMap[q.no];
+    div.innerHTML = `
+      <button class="stub-ck-btn${checked ? ' checked' : ''}" data-no="${escapeHtml(q.no)}" title="チェック切り替え">${checked ? '✓' : '　'}</button>
+      <span class="num">${escapeHtml(snippet)}</span>
+      <span class="dot"></span>`;
+    if (checked) div.classList.add('is-checked');
+
+    // チェックボタン：クリックでトグルのみ（ジャンプしない）
+    div.querySelector('.stub-ck-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      toggleCheck(q.no);
+      // ボタン自身の見た目を即更新
+      const btn = e.currentTarget;
+      const nowChecked = !!checkMap[q.no];
+      btn.textContent = nowChecked ? '✓' : '　';
+      btn.classList.toggle('checked', nowChecked);
+      div.classList.toggle('is-checked', nowChecked);
+    });
+
+    div.onclick = () => {
+      if (rec.status !== 'unanswered' || idx === progressIndex) {
+        viewIndex = idx;
+        renderCard(idx);
+      }
+    };
+    stubList.appendChild(div);
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderCard(idx){
+  if (dataset.length === 0) {
+    cardEl.innerHTML = `<div class="empty-state"><div class="display">問題がありません</div><div>右上の「問題を編集」からデータを追加してください。</div></div>`;
+    return;
+  }
+  if (idx >= dataset.length) {
+    const incorrectItems = dataset.filter(q => statusMap[q.no].status === 'incorrect');
+    const correctCount  = dataset.filter(q => statusMap[q.no].status === 'correct').length;
+    const incorrectCount = incorrectItems.length;
+    const pct = Math.round((correctCount / dataset.length) * 100);
+
+    const reviewBtnHtml = incorrectCount > 0 ? `
+      <button class="btn-review-incorrect" id="reviewIncorrectBtn">
+        <span class="ri-icon">✕</span> 誤答 ${incorrectCount} 問を復習する
+      </button>
+      <button class="btn-review-incorrect" id="checkIncorrectBtn" style="background:var(--accent-dim);border-color:var(--accent);color:#c8d8ff;">
+        ✓ 誤答問題にチェックを付ける
+      </button>` : `<p class="all-correct-msg">全問正解！お疲れ様でした 🎉</p>`;
+
+    cardEl.innerHTML = `
+      <div class="end-screen">
+        <div class="end-score-ring">
+          <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="40" cy="40" r="34" fill="none" stroke="var(--border)" stroke-width="7"/>
+            <circle cx="40" cy="40" r="34" fill="none"
+              stroke="${pct === 100 ? 'var(--correct)' : 'var(--accent)'}"
+              stroke-width="7"
+              stroke-linecap="round"
+              stroke-dasharray="${2 * Math.PI * 34}"
+              stroke-dashoffset="${2 * Math.PI * 34 * (1 - pct / 100)}"
+              transform="rotate(-90 40 40)"/>
+          </svg>
+          <div class="end-score-label">
+            <span class="end-pct">${pct}<small>%</small></span>
+          </div>
+        </div>
+        <p class="end-title display">演習終了</p>
+        <p class="end-stats">
+          <span class="es-correct">正解 ${correctCount}</span>
+          <span class="es-sep">/</span>
+          <span class="es-total">${dataset.length} 問</span>
+          ${incorrectCount > 0 ? `<span class="es-incorrect">誤答 ${incorrectCount}</span>` : ''}
+        </p>
+        ${reviewBtnHtml}
+        <p class="end-hint">サイドバーから各問題を個別に振り返れます</p>
+      </div>`;
+
+    if (incorrectCount > 0) {
+      document.getElementById('reviewIncorrectBtn').onclick = startIncorrectReview;
+      document.getElementById('checkIncorrectBtn').onclick = () => {
+        const n = markIncorrectChecked();
+        document.getElementById('checkIncorrectBtn').textContent = `✓ ${n}問にチェックを付けました`;
+        document.getElementById('checkIncorrectBtn').disabled = true;
+      };
+    }
+    const allStubs = document.querySelectorAll('.stub.current');
+    allStubs.forEach(el => el.classList.remove('current'));
+    return;
+  }
+
+  viewIndex = idx;
+  const q = dataset[idx];
+  const rec = statusMap[q.no];
+  const pct = Math.round((answeredCount() / dataset.length) * 100);
+
+  document.querySelectorAll('.stub').forEach(el => el.classList.remove('current'));
+  const stubEl = document.getElementById(`stub-${q.no}`);
+  if (stubEl) {
+    stubEl.classList.add('current');
+    stubEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  const imageUrl = imageMap[q.no];
+  const imageHtml = imageUrl
+    ? `<div class="image-wrap"><img src="${imageUrl}" alt=""></div>`
+    : `<div class="image-wrap hidden"></div>`;
+
+  const isReview = rec.status !== 'unanswered';
+  pendingSelection = null;
+  answeredOnce = isReview;
+
+  // ○✕問題のとき正解値を正規化して比較に使う
+  const tf = isTrueFalse(q);
+  const displayAnswer = tf ? normalizeTFAnswer(q.answer) : q.answer;
+
+  const optionsHtml = rec.shuffled.map((opt, i) => {
+    let cls = 'opt';
+    if (isReview) {
+      if (opt === displayAnswer) cls += ' correct';
+      else if (opt === rec.selected) cls += ' incorrect';
+    }
+    const letter = String.fromCharCode(65 + i);
+    return `<button class="${cls}" data-opt="${escapeHtml(opt)}" ${isReview ? 'disabled' : ''}>
+      <span class="tag mono">${letter}</span><span>${escapeHtml(opt)}</span>
+    </button>`;
+  }).join('');
+
+  const explanationHtml = q.explanation
+    ? `<div class="explanation-box${isReview ? '' : ' hidden'}" id="explanationBox">${escapeHtml(q.explanation)}</div>`
+    : '';
+
+  // ◀ 前へ：viewIndex > 0 かつ 1つ前が回答済みか現在地まで
+  const canPrev = viewIndex > 0;
+  // ▶ 次へ：回答済みで次がある、または未回答で回答後（progressIndex が進んでいる）
+  const canNext = isReviewMode
+    ? reviewQueue.indexOf(viewIndex) < reviewQueue.length - 1
+    : viewIndex < progressIndex;
+
+  cardEl.innerHTML = `
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="progress-label mono">${answeredCount()}/${dataset.length}</div>
+    </div>
+    <div class="quiz-body">
+      ${imageHtml}
+      <div class="qno mono">
+        <label class="check-label">
+          <input type="checkbox" class="q-checkbox" data-no="${escapeHtml(q.no)}" ${checkMap[q.no] ? 'checked' : ''}>
+          <span class="check-mark"></span>
+        </label>
+        Q${idx + 1} <span class="qno-total">/ ${dataset.length}</span>
+      </div>
+      <p class="question-text">${escapeHtml(q.question)}</p>
+    </div>
+    <div class="card-bottom">
+      ${explanationHtml}
+      <div class="nav-row">
+        <button class="btn-nav" id="prevBtn" ${canPrev ? '' : 'disabled'}>◀</button>
+        <div class="options" style="flex:1;">${optionsHtml}</div>
+        <button class="btn-nav" id="nextBtn" ${canNext ? '' : 'disabled'}>▶</button>
+      </div>
+    </div>
+  `;
+
+  if (!isReview) {
+    cardEl.querySelectorAll('.opt').forEach(btn => {
+      btn.addEventListener('click', () => handleOptionClick(btn, q, rec, displayAnswer));
+    });
+  } else {
+    // 復習画面：正解ボタンはクリックで次へ
+    cardEl.querySelectorAll('.opt').forEach(btn => {
+      if (btn.dataset.opt === displayAnswer) {
+        btn.disabled = false;
+        btn.addEventListener('click', handleNext);
+      }
+    });
+  }
+  document.getElementById('prevBtn').addEventListener('click', handlePrev);
+  document.getElementById('nextBtn').addEventListener('click', handleNext);
+
+  // チェックボックス
+  const ck = cardEl.querySelector('.q-checkbox');
+  if (ck) ck.addEventListener('change', () => toggleCheck(q.no));
+}
+
+function handleOptionClick(btn, q, rec, displayAnswer){
+  if (answeredOnce) return;
+  const value = btn.dataset.opt;
+
+  if (pendingSelection === btn) {
+    confirmAnswer(btn, value, q, rec, displayAnswer);
+    return;
+  }
+  cardEl.querySelectorAll('.opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  pendingSelection = btn;
+}
+
+function confirmAnswer(btn, value, q, rec, displayAnswer){
+  answeredOnce = true;
+  btn.classList.remove('selected');
+  rec.selected = value;
+
+  const allBtns = cardEl.querySelectorAll('.opt');
+  if (value === displayAnswer) {
+    btn.classList.add('correct');
+    rec.status = 'correct';
+    // 正解ボタンだけ有効のまま残してクリックで次へ進めるようにする
+    allBtns.forEach(b => { if (b !== btn) b.disabled = true; });
+    btn.addEventListener('click', handleNext);
+  } else {
+    btn.classList.add('incorrect');
+    rec.status = 'incorrect';
+    allBtns.forEach(b => {
+      if (b.dataset.opt === displayAnswer) {
+        b.classList.add('correct');
+        // 正解ボタンはクリックで次へ進めるよう有効のまま残す
+        b.addEventListener('click', handleNext);
+      } else {
+        b.disabled = true;
+      }
+    });
+  }
+
+  if (viewIndex === progressIndex) {
+    progressIndex = Math.min(progressIndex + 1, dataset.length);
+  }
+  saveProgress();
+  renderSidebar();
+  // 解説を表示
+  const exBox = document.getElementById('explanationBox');
+  if (exBox) exBox.classList.remove('hidden');
+  // ▶ ボタンを有効化
+  const nextBtn = document.getElementById('nextBtn');
+  if (nextBtn) nextBtn.disabled = false;
+}
+
+function startIncorrectReview(){
+  reviewQueue = dataset
+    .map((q, i) => ({ q, i }))
+    .filter(({ q }) => statusMap[q.no].status === 'incorrect')
+    .map(({ q, i }) => i);
+
+  reviewQueue.forEach(i => {
+    const q = dataset[i];
+    const rec = statusMap[q.no];
+    let opts;
+    if (isTrueFalse(q)) {
+      opts = normalizeTrueFalseOpts(q);
+    } else {
+      opts = [q.answer, ...q.dummies];
+      shuffle(opts);
+    }
+    rec.status = 'unanswered';
+    rec.shuffled = opts;
+    rec.selected = null;
+  });
+
+  isReviewMode = true;
+  savedProgressIndex = progressIndex;   // 現在地を退避
+  progressIndex = reviewQueue[0];
+  viewIndex = reviewQueue[0];
+  saveProgress();
+  renderSidebar();
+  renderCard(reviewQueue[0]);
+}
+
+function handlePrev(){
+  if (isReviewMode) {
+    const pos = reviewQueue.indexOf(viewIndex);
+    if (pos > 0) renderCard(reviewQueue[pos - 1]);
+    return;
+  }
+  if (viewIndex > 0) renderCard(viewIndex - 1);
+}
+
+function handleNext(){
+  if (isReviewMode) {
+    const pos = reviewQueue.indexOf(viewIndex);
+    if (pos !== -1 && pos + 1 < reviewQueue.length) {
+      const next = reviewQueue[pos + 1];
+      viewIndex = next;
+      progressIndex = next;
+      renderCard(next);
+    } else {
+      // 復習キュー終了 → progressIndex を元に戻して通常フローへ
+      isReviewMode = false;
+      reviewQueue = [];
+      progressIndex = savedProgressIndex;
+      viewIndex = progressIndex;
+      saveProgress();
+      renderSidebar();
+      renderCard(progressIndex);
+    }
+    return;
+  }
+  if (viewIndex < progressIndex) {
+    renderCard(viewIndex + 1);
+  } else {
+    renderCard(progressIndex);
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
