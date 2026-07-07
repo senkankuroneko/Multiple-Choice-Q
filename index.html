@@ -161,6 +161,12 @@
     flex-shrink:0;
   }
 
+  .explanation-area{
+    flex:0 0 90px;
+    overflow-y:auto;
+    margin-top:10px;
+  }
+
   .question-text{
     font-family:'Outfit',sans-serif;
     font-weight:600;
@@ -258,7 +264,6 @@
   .btn-nav:disabled{opacity:.25;cursor:default;pointer-events:none;}
 
   .explanation-box{
-    margin-top:10px;
     background:var(--panel-2);
     border:1px solid var(--border);
     border-left:3px solid var(--accent);
@@ -1571,8 +1576,10 @@ function renderCard(idx){
       </div>
       <p class="question-text">${escapeHtml(q.question)}</p>
     </div>
-    <div class="card-bottom">
+    <div class="explanation-area">
       ${explanationHtml}
+    </div>
+    <div class="card-bottom">
       <div class="nav-row">
         <button class="btn-nav" id="prevBtn" ${canPrev ? '' : 'disabled'}>◀</button>
         <div class="options" style="flex:1;">${optionsHtml}</div>
