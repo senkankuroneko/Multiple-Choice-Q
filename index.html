@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ｎ択問題演習</title>
+<title>ｎ択問題演習帳</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
@@ -697,16 +697,15 @@
     /* レイアウト：縦積み */
     .layout{ flex-direction:column; gap:12px; }
 
-    /* カード：高さを固定ではなく最小高さに */
+    /* カード：ビューポートベースの固定高さ（解説出現で選択肢がずれないよう） */
     .card{
-      height:auto;
-      min-height:0;
+      height:72svh;
+      min-height:420px;
       padding:16px 14px 14px;
     }
 
-    /* quiz-bodyに最小高さを確保して問題文が潰れないようにする */
-    .quiz-body{ min-height:80px; flex:0 0 auto; }
-    .card-bottom{ flex:0 0 auto; }
+    /* quiz-body・card-bottomはPC同様のflex構造を維持 */
+    .quiz-body{ min-height:60px; }
 
     /* 問題文フォントサイズを少し下げる */
     .question-text{ font-size:17px; }
@@ -717,11 +716,8 @@
     /* ナビボタン幅を少し狭く */
     .btn-nav{ width:36px; }
 
-    /* サイドバー：横幅いっぱい、高さは10問分固定 */
-    .sidebar{
-      width:100%;
-      height:auto;
-    }
+    /* サイドバー：横幅いっぱい */
+    .sidebar{ width:100%; height:auto; }
     .stub-list{ max-height:300px; }
 
     /* エディタオーバーレイ */
@@ -739,7 +735,7 @@
 <div class="app">
   <div class="topbar">
     <div class="brand">
-      <span class="mark">ｎ択問題演習</span>
+      <span class="mark">ｎ択問題演習帳</span>
       <span class="sub">SELF-STUDY DECK</span>
     </div>
     <div class="topbar-actions">
