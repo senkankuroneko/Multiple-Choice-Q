@@ -108,7 +108,7 @@
     flex-direction:column;
     height:600px;
     box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
-    overflow:hidden;
+    overflow:clip;
   }
 
   .progress-row{
@@ -159,6 +159,7 @@
 
   .card-bottom{
     flex-shrink:0;
+    overflow-y:auto;
   }
 
   .explanation-area{
@@ -198,8 +199,7 @@
     display:flex;
     flex-direction:column;
     gap:9px;
-    max-height:300px;
-    overflow-y:auto;
+    overflow-y:visible;
     padding-right:4px;
   }
   .opt{
@@ -578,27 +578,40 @@
     font-family:'JetBrains Mono',monospace;
   }
 
+  /* フォーカスリングをテーマカラーに統一 */
+  :focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+  }
+  .opt:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+    border-color:var(--accent);
+  }
+
   /* チェックボックス */
   .check-label{
     display:inline-flex;
     align-items:center;
     cursor:pointer;
-    margin-right:6px;
+    margin-right:2px;
     vertical-align:middle;
-    padding:4px;          /* 当たり判定を一回り大きく */
-    margin:-4px;          /* パディング分のレイアウトずれを打ち消す */
+    padding:6px;           /* 当たり判定をさらに一回り大きく */
+    margin:-6px;
     border-radius:6px;
   }
   .check-label input[type="checkbox"]{
     display:none;
   }
   .check-mark{
-    width:20px;height:20px;   /* 17px → 20px */
+    width:20px;height:20px;
     border:2px solid var(--border);
     border-radius:5px;
     background:var(--panel-2);
     display:inline-flex;align-items:center;justify-content:center;
+    font-family:'Inter',sans-serif;   /* stub-ck-btnと同じフォントに統一 */
     font-size:13px;
+    font-weight:600;
     color:#fff;
     transition:border-color .15s,background .15s;
     flex-shrink:0;
@@ -606,7 +619,7 @@
   .check-label:hover .check-mark{border-color:var(--accent);}
   .check-label input:checked + .check-mark{
     border-color:var(--accent);
-    background:var(--accent);   /* 塗りつぶしで視認性を上げる */
+    background:var(--accent);
   }
   .check-label input:checked + .check-mark::after{
     content:'✓';
@@ -620,13 +633,15 @@
     border-radius:4px;
     background:var(--panel);
     color:transparent;
+    font-family:'Inter',sans-serif;
     font-size:12px;
+    font-weight:600;
     line-height:1;
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;
     transition:border-color .15s,background .15s,color .15s;
     padding:0;
-    margin-right:6px;   /* テキストとの間隔を追加 */
+    margin-right:6px;
   }
   .stub-ck-btn:hover{border-color:var(--accent);color:var(--accent);}
   .stub-ck-btn.checked{
@@ -1453,6 +1468,11 @@ function escapeHtml(s){
 }
 
 function renderCard(idx){
+  // 前の問題のキーハンドラをクリア
+  if (cardEl._keyHandler) {
+    document.removeEventListener('keydown', cardEl._keyHandler);
+    cardEl._keyHandler = null;
+  }
   if (dataset.length === 0) {
     cardEl.innerHTML = `<div class="empty-state"><div class="display">問題がありません</div><div>右上の「問題を編集」からデータを追加してください。</div></div>`;
     return;
@@ -1543,9 +1563,9 @@ function renderCard(idx){
       if (opt === displayAnswer) cls += ' correct';
       else if (opt === rec.selected) cls += ' incorrect';
     }
-    const letter = String.fromCharCode(65 + i);
-    return `<button class="${cls}" data-opt="${escapeHtml(opt)}" ${isReview ? 'disabled' : ''}>
-      <span class="tag mono">${letter}</span><span>${escapeHtml(opt)}</span>
+    const label = i + 1;
+    return `<button class="${cls}" data-opt="${escapeHtml(opt)}" data-idx="${i}" ${isReview ? 'disabled' : ''}>
+      <span class="tag mono">${label}</span><span>${escapeHtml(opt)}</span>
     </button>`;
   }).join('');
 
@@ -1607,6 +1627,23 @@ function renderCard(idx){
   // チェックボックス
   const ck = cardEl.querySelector('.q-checkbox');
   if (ck) ck.addEventListener('change', () => toggleCheck(q.no));
+
+  // 数字キー入力で選択肢をクリック（未回答時のみ、PCフォーカス不要）
+  if (!isReview) {
+    const keyHandler = (e) => {
+      const n = parseInt(e.key);
+      if (isNaN(n) || n < 1) return;
+      const btn = cardEl.querySelector(`.opt[data-idx="${n - 1}"]`);
+      if (btn && !btn.disabled) btn.click();
+    };
+    document.addEventListener('keydown', keyHandler);
+    // 次の問題に移ったらリスナーを外す
+    cardEl._keyHandler = keyHandler;
+  }
+  if (cardEl._keyHandler && isReview) {
+    document.removeEventListener('keydown', cardEl._keyHandler);
+    cardEl._keyHandler = null;
+  }
 }
 
 function handleOptionClick(btn, q, rec, displayAnswer){
