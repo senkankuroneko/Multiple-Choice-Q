@@ -769,7 +769,7 @@ body{ padding:12px 10px 40px; }
 
 /* カード：ビューポートベースの固定高さ（解説出現で選択肢がずれないよう） */
 .card{
-    height:72svh;
+    height:80svh;
     min-height:420px;
     padding:16px 14px 14px;
 }
