@@ -172,8 +172,8 @@ function handleImageUpload(){
 }
 function populateImgNoSelect(){
   imgNoSelect.innerHTML = dataset.map((q, i) => {
-    const label = q.question.length > 20 ? q.question.slice(0, 20) + '…' : q.question;
-    return `<option value="${escapeHtml(q.no)}">Q${i + 1}: ${escapeHtml(label)}</option>`;
+    const label = q.question.length > 20 ? q.question.slice(0, 12) + '…' : q.question;
+    return `<option value="${escapeHtml(q.no)}">Q${i + 1}：${escapeHtml(label)}</option>`;
   }).join('');
   renderImagePreview();
 }
@@ -861,7 +861,7 @@ function renderCard(idx){
   const stubEl = document.getElementById(`stub-${q.no}`);
   if (stubEl) {
     stubEl.classList.add('current');
-    stubEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    //stubEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   const imageUrl = imageMap[q.no];
