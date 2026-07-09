@@ -107,7 +107,7 @@ border-radius:16px;
 padding:26px 28px 22px;
 display:flex;
 flex-direction:column;
-height:630px;
+height:650px;
 box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
 overflow:clip;
 }
@@ -573,7 +573,7 @@ background:var(--panel-2);
 color:var(--text);
 border:1px solid var(--border);
 border-radius:8px;
-padding:8px 10px;
+padding:8px 8px;
 font-size:12.5px;
 }
 .image-manager-row input[type="file"]{
@@ -769,8 +769,8 @@ body{ padding:12px 10px 40px; }
 
 /* カード：ビューポートベースの固定高さ（解説出現で選択肢がずれないよう） */
 .card{
-    height:80svh;
-    min-height:420px;
+    height:calc(100svh - 120px);
+    min-height:500px;
     padding:16px 14px 14px;
 }
 
