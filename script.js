@@ -5,8 +5,30 @@ const CHECK_KEY = 'nquiz_checks_v1';
 const SETS_KEY  = 'nquiz_sets_v1';
 const RIPPLE_KEY = 'nquiz_ripple_v1';
 const FONT_KEY   = 'nquiz_font_v1';
+const THEME_KEY  = 'nquiz_theme_v1';
 
-let rippleEnabled = false;
+let rippleEnabled = true;
+
+const THEMES = [
+  { id: 'dark',     label: 'ダーク（デフォルト）' },
+  { id: 'midnight', label: 'ミッドナイト' },
+  { id: 'forest',   label: 'フォレスト' },
+  { id: 'light',    label: 'ライト' },
+  { id: 'sepia',    label: 'セピア' },
+];
+
+let currentThemeId = 'dark';
+
+function applyTheme(id) {
+  currentThemeId = id;
+  document.documentElement.setAttribute('data-theme', id);
+}
+function saveTheme(id) {
+  try { localStorage.setItem(THEME_KEY, id); } catch(e) {}
+}
+function loadTheme() {
+  try { currentThemeId = localStorage.getItem(THEME_KEY) || 'dark'; } catch(e) {}
+}
 
 const SAMPLE_TSV =
 `チェック\t問題\t解説\t正解\t誤答1\t誤答2\t誤答3
@@ -67,6 +89,26 @@ clearImgBtn.onclick = () => {
   imgMsg.className = 'editor-msg ok';
 };
 imgFileInput.onchange = handleImageUpload;
+
+document.addEventListener("pointerdown", (e) => {
+    if (!rippleEnabled) return;
+    // 左クリック・タップのみ
+    if (e.button !== undefined && e.button !== 0) return;
+
+    const ripple = document.createElement("span");
+    ripple.className = "global-ripple";
+
+    const size = 20;
+
+    ripple.style.width = `${size}px`;
+    ripple.style.height = `${size}px`;
+    ripple.style.left = `${e.clientX}px`;
+    ripple.style.top = `${e.clientY}px`;
+
+    document.body.appendChild(ripple);
+
+    ripple.addEventListener("animationend", () => ripple.remove());
+});
 
 function parseDataset(raw, hasHeader, hasExplain){
   const delim = raw.includes('\t') ? '\t' : ',';
@@ -208,7 +250,7 @@ const TF_MARU = ['○', '〇', 'まる', '正', '◯'];
 const TF_BATSU = ['×', '✕', 'ばつ', '誤', 'バツ'];
 const TF_ALL = [...TF_MARU, ...TF_BATSU];
 
-// ○×問題の判定：正解が○か×のバリエーションであれば○✕問題とみなす
+// ○×問題の判定：正解が○か×のバリエーションであれば○×問題とみなす
 function isTrueFalse(q){
   return TF_ALL.includes(q.answer.trim());
 }
@@ -309,8 +351,9 @@ function toggleCheckMode(){
     dataset = checked.map((q, i) => ({ ...q, no: String(i + 1) }));
     isCheckMode = true;
   } else {
-    dataset = fullDataset;
-    isCheckMode = false;
+  if (!confirm('チェックモードを解除すると回答はリセットされます。続けますか？')) return;
+  dataset = fullDataset;
+  isCheckMode = false;
   }
   updateCheckModeBtn();
   restart(true);
@@ -403,16 +446,8 @@ function deleteSetUI(name){
 // { label, body, display, mono, googleUrl }
 const FONT_PRESETS = [
   {
-    id:'default',
-    label:'Inter / Outfit（デフォルト）',
-    body:"'Inter',sans-serif",
-    display:"'Outfit',sans-serif",
-    mono:"'JetBrains Mono',monospace",
-    googleUrl:'family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600'
-  },
-  {
     id:'ibmplex',
-    label:'IBM Plex Sans JP',
+    label:'IBM Plex Sans JP（デフォルト）',
     body:"'IBM Plex Sans JP','IBM Plex Sans',sans-serif",
     display:"'IBM Plex Sans JP','IBM Plex Sans',sans-serif",
     mono:"'IBM Plex Mono',monospace",
@@ -441,14 +476,6 @@ const FONT_PRESETS = [
     display:"'Kosugi Maru',sans-serif",
     mono:"'JetBrains Mono',monospace",
     googleUrl:'family=Kosugi+Maru&family=JetBrains+Mono:wght@400;500;600'
-  },
-  {
-    id:'yusei',
-    label:'Yusei Magic（ゆせいマジック）',
-    body:"'Yusei Magic',sans-serif",
-    display:"'Yusei Magic',sans-serif",
-    mono:"'JetBrains Mono',monospace",
-    googleUrl:'family=Yusei+Magic&family=JetBrains+Mono:wght@400;500;600'
   },
 ];
 
@@ -494,34 +521,29 @@ function applyFont(id){
   root.style.setProperty('--font-mono',    preset.mono);
 }
 
+// 文字サイズ設定
+const FS_KEY = 'nquiz_fontsize_v1';
+const fsSaved = (() => { try { return JSON.parse(localStorage.getItem(FS_KEY)) || {}; } catch(e){ return {}; } })();
+
+const fsQuestion = fsSaved.q || '21';
+const fsOption   = fsSaved.o || '14.5';
+const fsExplain  = fsSaved.e || '13.5';
+
+function applyFontSizes(q, o, e) {
+  const r = document.documentElement;
+  r.style.setProperty('--fs-question', q + 'px');
+  r.style.setProperty('--fs-option',   o + 'px');
+  r.style.setProperty('--fs-explain',  e + 'px');
+}
+applyFontSizes(fsQuestion, fsOption, fsExplain);
+
 function saveRippleSetting(){
   try { localStorage.setItem(RIPPLE_KEY, rippleEnabled ? '1' : '0'); } catch(e){}
 }
 function loadRippleSetting(){
   try { rippleEnabled = localStorage.getItem(RIPPLE_KEY) === '1'; } catch(e){}
 }
-function createRipple(e){
-  if (!rippleEnabled) return;
-  const target = e.currentTarget;
-  // ripple-host クラスが必要
-  if (!target.classList.contains('ripple-host')) return;
-  const rect = target.getBoundingClientRect();
-  const size = Math.max(rect.width, rect.height);
-  const x = (e.clientX ?? (e.touches?.[0]?.clientX ?? rect.left + rect.width/2)) - rect.left - size/2;
-  const y = (e.clientY ?? (e.touches?.[0]?.clientY ?? rect.top + rect.height/2)) - rect.top - size/2;
-  const ripple = document.createElement('span');
-  ripple.className = 'ripple';
-  ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
-  target.appendChild(ripple);
-  ripple.addEventListener('animationend', () => ripple.remove());
-}
-function attachRippleToCard(){
-  // card内の opt と btn-nav に波紋を付ける
-  cardEl.querySelectorAll('.opt, .btn-nav').forEach(el => {
-    el.classList.add('ripple-host');
-    el.addEventListener('pointerdown', createRipple);
-  });
-}
+
 
 function toggleShuffle(){
   const msg = isShuffled
@@ -573,6 +595,8 @@ function boot(){
   applyFont(currentFontId);
   const { fwBody, fwDisplay } = loadFontWeights();
   applyFontWeights(fwBody, fwDisplay);
+  loadTheme();
+  applyTheme(currentThemeId);
 
   const restored = loadProgress();
   if (!restored || Object.keys(statusMap).length !== dataset.length) {
@@ -704,6 +728,18 @@ function openEditor(){
     applyFontWeights(fwBodySel.value, fwDisplaySel.value);
     saveFontWeights(fwBodySel.value, fwDisplaySel.value);
   };
+
+  // テーマセレクタ初期化
+  const themeSel = document.getElementById('themeSelect');
+  if (themeSel) {
+    themeSel.innerHTML = THEMES.map(t =>
+      `<option value="${t.id}" ${t.id === currentThemeId ? 'selected' : ''}>${t.label}</option>`
+    ).join('');
+    themeSel.onchange = () => {
+      applyTheme(themeSel.value);
+      saveTheme(themeSel.value);
+    };
+  }
 }
 function closeEditor(){
   editorOverlay.classList.add('hidden');
@@ -756,7 +792,7 @@ function renderSidebar(){
     const snippet = q.question.length > 12 ? q.question.slice(0, 12) + '…' : q.question;
     const checked = !!checkMap[q.no];
     div.innerHTML = `
-      <button class="stub-ck-btn${checked ? ' checked' : ''}" data-no="${escapeHtml(q.no)}" title="チェック切り替え">${checked ? '✓' : '　'}</button>
+      <button class="stub-ck-btn${checked ? ' checked' : ''}" data-no="${escapeHtml(q.no)}" title="チェック切り替え">${checked ? '✓' : ''}</button>
       <span class="num">${escapeHtml(snippet)}</span>
       <span class="dot"></span>`;
     if (checked) div.classList.add('is-checked');
@@ -768,7 +804,7 @@ function renderSidebar(){
       // ボタン自身の見た目を即更新
       const btn = e.currentTarget;
       const nowChecked = !!checkMap[q.no];
-      btn.textContent = nowChecked ? '✓' : '　';
+      btn.textContent = nowChecked ? '✓' : '';
       btn.classList.toggle('checked', nowChecked);
       div.classList.toggle('is-checked', nowChecked);
     });
@@ -807,7 +843,7 @@ function renderCard(idx){
       <button class="btn-review-incorrect" id="reviewIncorrectBtn">
         誤答 ${incorrectCount} 問を復習する
       </button>
-      <button class="btn-review-incorrect" id="checkIncorrectBtn" style="background:var(--accent-dim);border-color:var(--accent);color:#c8d8ff;">
+      <button class="btn-review-incorrect" id="checkIncorrectBtn" style="background:var(--accent-dim);border-color:var(--accent);color:var(--text);">
         ✓　誤答問題にチェックを付ける
       </button>` : `<p class="all-correct-msg">全問正解！　お疲れ様でした</p>`;
 
@@ -903,7 +939,6 @@ function renderCard(idx){
   cardEl.innerHTML = `
     <div class="progress-row">
       <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
-      <div class="progress-label mono">${answeredCount()}/${dataset.length}</div>
     </div>
     <div class="quiz-body">
       ${imageHtml}
@@ -964,8 +999,6 @@ function renderCard(idx){
     document.removeEventListener('keydown', cardEl._keyHandler);
     cardEl._keyHandler = null;
   }
-
-  attachRippleToCard();
 }
 
 function handleOptionClick(btn, q, rec, displayAnswer){
