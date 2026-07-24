@@ -113,8 +113,12 @@
       <h3 class="display">表示設定</h3>
       <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;font-size:13px;color:var(--muted);">
         <input type="checkbox" id="rippleEnabledCk" style="accent-color:var(--accent);width:15px;height:15px;">
-        波紋アニメーションを有効にする
+        波紋エフェクトを有効にする
       </label>
+      <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px;">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">テーマ</div>
+        <select id="themeSelect" class="font-select"></select>
+      </div>
       <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px;">
         <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">フォント</div>
         <select id="fontSelect" class="font-select"></select>
@@ -140,6 +144,26 @@
               <option value="800">800 ExtraBold</option>
             </select>
           </div>
+          <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">文字サイズ</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <label style="font-size:12px;color:var(--muted);">問題文
+              <input type="range" id="fsQuestionRange" min="14" max="32" step="1" value="21"
+                style="width:100%;accent-color:var(--accent);">
+              <span id="fsQuestionVal">21px</span>
+            </label>
+            <label style="font-size:12px;color:var(--muted);">選択肢
+              <input type="range" id="fsOptionRange" min="11" max="22" step="0.5" value="14.5"
+                style="width:100%;accent-color:var(--accent);">
+              <span id="fsOptionVal">14.5px</span>
+            </label>
+            <label style="font-size:12px;color:var(--muted);">解説
+              <input type="range" id="fsExplainRange" min="11" max="22" step="0.5" value="13.5"
+                style="width:100%;accent-color:var(--accent);">
+              <span id="fsExplainVal">13.5px</span>
+            </label>
+          </div>
+        </div>
         </div>
       </div>
     </div>
