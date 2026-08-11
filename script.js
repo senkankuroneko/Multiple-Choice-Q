@@ -3,11 +3,8 @@ const DATA_KEY = 'nquiz_dataset_v1';
 const IMG_KEY = 'nquiz_images_v1';
 const CHECK_KEY = 'nquiz_checks_v1';
 const SETS_KEY  = 'nquiz_sets_v1';
-const RIPPLE_KEY = 'nquiz_ripple_v1';
 const FONT_KEY   = 'nquiz_font_v1';
 const THEME_KEY  = 'nquiz_theme_v1';
-
-let rippleEnabled = true;
 
 const THEMES = [
   { id: 'dark',     label: 'ダーク（デフォルト）' },
@@ -89,26 +86,6 @@ clearImgBtn.onclick = () => {
   imgMsg.className = 'editor-msg ok';
 };
 imgFileInput.onchange = handleImageUpload;
-
-document.addEventListener("pointerdown", (e) => {
-    if (!rippleEnabled) return;
-    // 左クリック・タップのみ
-    if (e.button !== undefined && e.button !== 0) return;
-
-    const ripple = document.createElement("span");
-    ripple.className = "global-ripple";
-
-    const size = 20;
-
-    ripple.style.width = `${size}px`;
-    ripple.style.height = `${size}px`;
-    ripple.style.left = `${e.clientX}px`;
-    ripple.style.top = `${e.clientY}px`;
-
-    document.body.appendChild(ripple);
-
-    ripple.addEventListener("animationend", () => ripple.remove());
-});
 
 function parseDataset(raw, hasHeader, hasExplain){
   const delim = raw.includes('\t') ? '\t' : ',';
@@ -537,11 +514,8 @@ function applyFontSizes(q, o, e) {
 }
 applyFontSizes(fsQuestion, fsOption, fsExplain);
 
-function saveRippleSetting(){
-  try { localStorage.setItem(RIPPLE_KEY, rippleEnabled ? '1' : '0'); } catch(e){}
-}
-function loadRippleSetting(){
-  try { rippleEnabled = localStorage.getItem(RIPPLE_KEY) === '1'; } catch(e){}
+function saveFontSizes(q, o, e){
+  try { localStorage.setItem(FS_KEY, JSON.stringify({ q, o, e })); } catch(err){}
 }
 
 
@@ -590,7 +564,6 @@ function boot(){
   }
   loadImageMap();
   loadCheckMap();
-  loadRippleSetting();
   loadFontSetting();
   applyFont(currentFontId);
   const { fwBody, fwDisplay } = loadFontWeights();
@@ -692,13 +665,6 @@ function openEditor(){
     URL.revokeObjectURL(a.href);
   };
   editorOverlay.classList.remove('hidden');
-  // 波紋設定チェックボックスの初期化
-  const rippleCk = document.getElementById('rippleEnabledCk');
-  rippleCk.checked = rippleEnabled;
-  rippleCk.onchange = () => {
-    rippleEnabled = rippleCk.checked;
-    saveRippleSetting();
-  };
 
   // フォント選択セレクタの初期化
   const fontSel = document.getElementById('fontSelect');
@@ -740,6 +706,39 @@ function openEditor(){
       saveTheme(themeSel.value);
     };
   }
+
+  // 文字サイズスライダーの初期化
+  const fsQRange = document.getElementById('fsQuestionRange');
+  const fsORange = document.getElementById('fsOptionRange');
+  const fsERange = document.getElementById('fsExplainRange');
+  const fsQVal   = document.getElementById('fsQuestionVal');
+  const fsOVal   = document.getElementById('fsOptionVal');
+  const fsEVal   = document.getElementById('fsExplainVal');
+
+  const curFs = (() => { try { return JSON.parse(localStorage.getItem(FS_KEY)) || {}; } catch(err){ return {}; } })();
+  const qVal = curFs.q || fsQuestion;
+  const oVal = curFs.o || fsOption;
+  const eVal = curFs.e || fsExplain;
+
+  fsQRange.value = qVal; fsQVal.textContent = qVal + 'px';
+  fsORange.value = oVal; fsOVal.textContent = oVal + 'px';
+  fsERange.value = eVal; fsEVal.textContent = eVal + 'px';
+
+  fsQRange.oninput = () => {
+    fsQVal.textContent = fsQRange.value + 'px';
+    applyFontSizes(fsQRange.value, fsORange.value, fsERange.value);
+    saveFontSizes(fsQRange.value, fsORange.value, fsERange.value);
+  };
+  fsORange.oninput = () => {
+    fsOVal.textContent = fsORange.value + 'px';
+    applyFontSizes(fsQRange.value, fsORange.value, fsERange.value);
+    saveFontSizes(fsQRange.value, fsORange.value, fsERange.value);
+  };
+  fsERange.oninput = () => {
+    fsEVal.textContent = fsERange.value + 'px';
+    applyFontSizes(fsQRange.value, fsORange.value, fsERange.value);
+    saveFontSizes(fsQRange.value, fsORange.value, fsERange.value);
+  };
 }
 function closeEditor(){
   editorOverlay.classList.add('hidden');
