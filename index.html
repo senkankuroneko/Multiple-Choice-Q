@@ -45,10 +45,8 @@
       <button class="btn-panel-close" id="panelCloseBtn" aria-label="閉じる">✕</button>
     </div>
     <p class="hint">
-      解説を省く場合は列ごと省略可。正解の直後から誤答列として扱う。
-      タブ区切り（スプレッドシートからのコピペ）またはカンマ区切り。<br>
-      列の並び：<b>チェック(0/1)</b>(任意)<b>, 問題文, 解説</b>(任意)<b>, 正解, 誤答1, 誤答2, ...</b><br>
-      チェック列は1行目が0か1のとき自動認識される。
+      列の並び：<b>チェック(0/1,任意), 問題文, 解説(任意), 正解, 誤答1, 誤答2…</b><br>
+      タブ／カンマ区切り。セル内改行は<b>" "</b>で囲む、下線は<b>__テキスト__</b>。
     </p>
     <div class="import-row">
       <div class="drop-zone" id="dropZone">
@@ -70,6 +68,9 @@
       2列目を解説として読み込む（OFFにすると 問題, 正解, 誤答... の列順になる）
     </label>
     <textarea id="dataInput" spellcheck="false"></textarea>
+    <div class="tab-insert-row">
+      <button type="button" class="btn btn-ghost btn-tab-insert" id="tabInsertBtn">⇥ タブ挿入</button>
+    </div>
     <div class="editor-footer">
       <span class="editor-msg" id="editorMsg"></span>
       <div style="display:flex;gap:8px;">
@@ -120,7 +121,18 @@
         <select id="fontSelect" class="font-select"></select>
         <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;">
           <div style="flex:1;min-width:120px;">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">本文ウェイト（選択肢）</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">問題文ウェイト</div>
+            <select id="fwDisplaySelect" class="font-select">
+              <option value="300">300 Light</option>
+              <option value="400">400 Regular</option>
+              <option value="500" selected>500 Medium</option>
+              <option value="600">600 SemiBold</option>
+              <option value="700">700 Bold</option>
+              <option value="800">800 ExtraBold</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:120px;">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">選択肢ウェイト</div>
             <select id="fwBodySelect" class="font-select">
               <option value="300">300 Light</option>
               <option value="400" selected>400 Regular</option>
@@ -129,38 +141,31 @@
               <option value="700">700 Bold</option>
             </select>
           </div>
-          <div style="flex:1;min-width:120px;">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">見出しウェイト（問題文）</div>
-            <select id="fwDisplaySelect" class="font-select">
-              <option value="300">300 Light</option>
-              <option value="400">400 Regular</option>
-              <option value="500">500 Medium</option>
-              <option value="600" selected>600 SemiBold</option>
-              <option value="700">700 Bold</option>
-              <option value="800">800 ExtraBold</option>
-            </select>
-          </div>
-          <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px;">
-          <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">文字サイズ</div>
-          <div style="display:flex;flex-direction:column;gap:10px;">
-            <label style="font-size:12px;color:var(--muted);">問題文
-              <input type="range" id="fsQuestionRange" min="14" max="32" step="1" value="21"
-                style="width:100%;accent-color:var(--accent);">
-              <span id="fsQuestionVal">21px</span>
-            </label>
-            <label style="font-size:12px;color:var(--muted);">選択肢
-              <input type="range" id="fsOptionRange" min="11" max="22" step="0.5" value="14.5"
-                style="width:100%;accent-color:var(--accent);">
-              <span id="fsOptionVal">14.5px</span>
-            </label>
-            <label style="font-size:12px;color:var(--muted);">解説
-              <input type="range" id="fsExplainRange" min="11" max="22" step="0.5" value="13.5"
-                style="width:100%;accent-color:var(--accent);">
-              <span id="fsExplainVal">13.5px</span>
-            </label>
-          </div>
         </div>
+      </div>
+      <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px;">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">文字サイズ</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label style="font-size:12px;color:var(--muted);">問題文
+            <input type="range" id="fsQuestionRange" min="14" max="32" step="1" value="21"
+              style="width:100%;accent-color:var(--accent);">
+            <span id="fsQuestionVal">21px</span>
+          </label>
+          <label style="font-size:12px;color:var(--muted);">選択肢
+            <input type="range" id="fsOptionRange" min="11" max="22" step="0.5" value="14.5"
+              style="width:100%;accent-color:var(--accent);">
+            <span id="fsOptionVal">14.5px</span>
+          </label>
+          <label style="font-size:12px;color:var(--muted);">解説
+            <input type="range" id="fsExplainRange" min="11" max="22" step="0.5" value="13.5"
+              style="width:100%;accent-color:var(--accent);">
+            <span id="fsExplainVal">13.5px</span>
+          </label>
         </div>
+      </div>
+      <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px;">
+        <button class="btn btn-ghost" id="resetDisplaySettingsBtn">設定を初期化</button>
+        <div class="editor-msg" id="resetDisplayMsg" style="margin-top:8px;"></div>
       </div>
     </div>
   </div>
