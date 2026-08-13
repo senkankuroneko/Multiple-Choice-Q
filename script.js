@@ -72,6 +72,27 @@ document.getElementById('editorOverlay').onclick = e => {
 };
 document.getElementById('loadSampleBtn').onclick = () => dataInput.value = SAMPLE_TSV;
 document.getElementById('applyBtn').onclick = applyEditorData;
+
+// textarea内でTabキーを押したときフォーカス移動ではなくタブ文字を挿入する
+function insertTabAtCursor(){
+  const start = dataInput.selectionStart;
+  const end   = dataInput.selectionEnd;
+  const value = dataInput.value;
+  dataInput.value = value.slice(0, start) + '\t' + value.slice(end);
+  const pos = start + 1;
+  dataInput.selectionStart = dataInput.selectionEnd = pos;
+}
+dataInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    insertTabAtCursor();
+  }
+});
+// スマホ等、物理Tabキーが無い環境向けのボタン
+document.getElementById('tabInsertBtn').onclick = () => {
+  dataInput.focus();
+  insertTabAtCursor();
+};
 document.getElementById('resetBtn').onclick = () => {
   if (confirm('進捗をすべてリセットして最初の問題から始めますか？')) restart(true);
 };
@@ -87,18 +108,55 @@ clearImgBtn.onclick = () => {
 };
 imgFileInput.onchange = handleImageUpload;
 
+// 引用符( " )で囲われたフィールド内の改行・タブ・カンマ・エスケープされた引用符(“”)に対応した
+// CSV/TSV行パーサー（スプレッドシートからの複数行セルのコピペにも対応）
+function parseCsvRows(raw, delim){
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+  let i = 0;
+  const len = raw.length;
+  while (i < len) {
+    const ch = raw[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (raw[i + 1] === '"') { field += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      }
+      field += ch; i++; continue;
+    } else {
+      if (ch === '"' && field === '') { inQuotes = true; i++; continue; }
+      if (ch === delim) { row.push(field); field = ''; i++; continue; }
+      if (ch === '\r') { i++; continue; }
+      if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; i++; continue; }
+      field += ch; i++; continue;
+    }
+  }
+  if (field !== '' || row.length > 0) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+// フィールドに区切り文字・改行・引用符が含まれる場合はCSV/TSV仕様に沿って引用符で囲む
+function csvEscapeField(value, delim){
+  const v = String(value ?? '');
+  if (v.includes(delim) || v.includes('\n') || v.includes('\r') || v.includes('"')) {
+    return '"' + v.replace(/"/g, '""') + '"';
+  }
+  return v;
+}
+
 function parseDataset(raw, hasHeader, hasExplain){
   const delim = raw.includes('\t') ? '\t' : ',';
-  const lines = raw.split(/\r?\n/).filter(l => l.trim() !== '');
-  if (lines.length < (hasHeader ? 2 : 1)) throw new Error('データが不足しています（最低1行が必要）。');
+  let rows = parseCsvRows(raw, delim).map(cols => cols.map(c => c.trim()));
+  rows = rows.filter(cols => cols.some(c => c !== ''));
+  if (rows.length < (hasHeader ? 2 : 1)) throw new Error('データが不足しています（最低1行が必要）。');
 
-  const dataRows = hasHeader ? lines.slice(1) : lines;
+  const dataRows = hasHeader ? rows.slice(1) : rows;
   const list = [];
   const newCheckMap = {};
 
-  dataRows.forEach(line => {
-    const cols = line.split(delim).map(c => c.trim());
-
+  dataRows.forEach(cols => {
     // 1列目が 0/1 のときはチェック列あり
     let offset = 0;
     let checkVal = false;
@@ -128,10 +186,7 @@ function parseDataset(raw, hasHeader, hasExplain){
   if (list.length === 0) throw new Error('有効な問題行が見つかりませんでした。列の並びを確認してください。');
 
   // チェック列があったデータならcheckMapを上書き
-  const hasCheckCol = dataRows.some(line => {
-    const c = line.split(delim)[0].trim();
-    return c === '0' || c === '1';
-  });
+  const hasCheckCol = dataRows.some(cols => cols[0] === '0' || cols[0] === '1');
   if (hasCheckCol) {
     checkMap = newCheckMap;
     saveCheckMap();
@@ -470,9 +525,9 @@ function saveFontWeights(fwBody, fwDisplay){
 function loadFontWeights(){
   try {
     const raw = localStorage.getItem(FONT_KEY + '_w');
-    if (!raw) return { fwBody:'400', fwDisplay:'600' };
+    if (!raw) return { fwBody:'400', fwDisplay:'500' };
     return JSON.parse(raw);
-  } catch(e){ return { fwBody:'400', fwDisplay:'600' }; }
+  } catch(e){ return { fwBody:'400', fwDisplay:'500' }; }
 }
 function applyFontWeights(fwBody, fwDisplay){
   const root = document.documentElement;
@@ -589,7 +644,7 @@ function openEditor(){
     if (raw) {
       const ds = JSON.parse(raw);
       const header = 'チェック\t問題\t解説\t正解\t誤答1\t誤答2';
-      const rows = ds.map(q => [checkMap[q.no] ? '1' : '0', q.question, q.explanation||'', q.answer, ...q.dummies].join('\t'));
+      const rows = ds.map(q => [checkMap[q.no] ? '1' : '0', q.question, q.explanation||'', q.answer, ...q.dummies].map(v => csvEscapeField(v, '\t')).join('\t'));
       dataInput.value = [header, ...rows].join('\n');
     } else {
       dataInput.value = SAMPLE_TSV;
@@ -655,7 +710,7 @@ function openEditor(){
     const targets = checkedOnly ? dataset.filter(q => checkMap[q.no]) : dataset;
     if (checkedOnly && targets.length === 0) { document.getElementById('setMsg').textContent='チェックが付いている問題がありません'; document.getElementById('setMsg').className='editor-msg err'; return; }
     const header = 'チェック\t問題\t解説\t正解\t誤答1\t誤答2';
-    const rows = targets.map(q => [checkMap[q.no] ? '1' : '0', q.question, q.explanation||'', q.answer, ...q.dummies].join('\t'));
+    const rows = targets.map(q => [checkMap[q.no] ? '1' : '0', q.question, q.explanation||'', q.answer, ...q.dummies].map(v => csvEscapeField(v, '\t')).join('\t'));
     const tsv = [header, ...rows].join('\n');
     const blob = new Blob([tsv], { type: 'text/tab-separated-values' });
     const a = document.createElement('a');
@@ -680,6 +735,13 @@ function openEditor(){
     fontSel.style.fontFamily = np.body;
   };
 
+  // ウェイト・テーマ・文字サイズなど表示設定UIの初期化
+  syncDisplaySettingsUI();
+}
+
+// 表示設定パネルの各コントロール（フォントウェイト・テーマ・文字サイズ）を
+// 現在の設定値で同期する。設定初期化ボタンからも呼び出す。
+function syncDisplaySettingsUI(){
   // ウェイトセレクタ初期化
   const weights = loadFontWeights();
   const fwBodySel    = document.getElementById('fwBodySelect');
@@ -706,6 +768,10 @@ function openEditor(){
       saveTheme(themeSel.value);
     };
   }
+
+  // フォントセレクタの選択状態も同期
+  const fontSel = document.getElementById('fontSelect');
+  if (fontSel) fontSel.value = currentFontId;
 
   // 文字サイズスライダーの初期化
   const fsQRange = document.getElementById('fsQuestionRange');
@@ -740,6 +806,31 @@ function openEditor(){
     saveFontSizes(fsQRange.value, fsORange.value, fsERange.value);
   };
 }
+
+// 表示設定（テーマ・フォント・ウェイト・文字サイズ）を初期値に戻す
+function resetDisplaySettings(){
+  try {
+    localStorage.removeItem(THEME_KEY);
+    localStorage.removeItem(FONT_KEY);
+    localStorage.removeItem(FONT_KEY + '_w');
+    localStorage.removeItem(FS_KEY);
+  } catch(e){}
+
+  applyTheme('dark');
+  applyFont(FONT_PRESETS[0].id);
+  applyFontWeights('400', '500');
+  applyFontSizes('21', '14.5', '13.5');
+
+  syncDisplaySettingsUI();
+
+  const msg = document.getElementById('resetDisplayMsg');
+  if (msg) { msg.textContent = '表示設定を初期化しました'; msg.className = 'editor-msg ok'; }
+}
+document.getElementById('resetDisplaySettingsBtn').onclick = () => {
+  if (!confirm('テーマ・フォント・文字サイズなどの表示設定を初期値に戻しますか？（問題データやチェック状態は変更されません）')) return;
+  resetDisplaySettings();
+};
+
 function closeEditor(){
   editorOverlay.classList.add('hidden');
 }
@@ -820,6 +911,14 @@ function renderSidebar(){
 
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// 問題文・解説向けの簡易整形：改行を<br>に、__text__ をアンダーライン<u>に変換
+function formatRichText(s){
+  let html = escapeHtml(s);
+  html = html.replace(/__(.+?)__/g, '<u>$1</u>');
+  html = html.replace(/\n/g, '<br>');
+  return html;
 }
 
 function renderCard(idx){
@@ -925,7 +1024,7 @@ function renderCard(idx){
   }).join('');
 
   const explanationHtml = q.explanation
-    ? `<div class="explanation-box${isReview ? '' : ' hidden'}" id="explanationBox">${escapeHtml(q.explanation)}</div>`
+    ? `<div class="explanation-box${isReview ? '' : ' hidden'}" id="explanationBox">${formatRichText(q.explanation)}</div>`
     : '';
 
   // ◀ 前へ：viewIndex > 0 かつ 1つ前が回答済みか現在地まで
@@ -948,7 +1047,7 @@ function renderCard(idx){
         </label>
         Q${idx + 1} <span class="qno-total">/ ${dataset.length}</span>
       </div>
-      <p class="question-text">${escapeHtml(q.question)}</p>
+      <p class="question-text">${formatRichText(q.question)}</p>
     </div>
     <div class="explanation-area">
       ${explanationHtml}
