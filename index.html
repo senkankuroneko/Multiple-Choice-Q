@@ -16,7 +16,7 @@
       <span class="mark">ｎ択問題演習帳</span>
     </div>
     <div class="topbar-actions">
-      <button class="btn btn-ghost" id="checkModeBtn">☑ チェック問題のみ</button>
+      <button class="btn btn-ghost" id="checkModeBtn">チェック問題のみ</button>
       <button class="btn btn-ghost" id="shuffleBtn">シャッフル</button>
       <button class="btn btn-ghost" id="editBtn">設定</button>
       <button class="btn" id="resetBtn">最初から</button>
@@ -32,6 +32,9 @@
         <span>問題一覧</span>
         <span class="count" id="sidebarCount">0/0</span>
       </div>
+      <div class="sidebar-search-row">
+        <input type="text" id="stubSearchInput" class="sidebar-search-input" placeholder="問題を検索…">
+      </div>
       <div class="stub-list" id="stubList"></div>
       <button class="btn-sidebar-review hidden" id="sidebarReviewBtn">誤答を復習</button>
     </div>
@@ -44,128 +47,165 @@
       <h2 class="display" style="margin:0;">設定</h2>
       <button class="btn-panel-close" id="panelCloseBtn" aria-label="閉じる">✕</button>
     </div>
-    <p class="hint">
-      列の並び：<b>チェック(0/1,任意), 問題文, 解説(任意), 正解, 誤答1, 誤答2…</b><br>
-      タブ／カンマ区切り。セル内改行は<b>" "</b>で囲む、下線は<b>__テキスト__</b>。
-    </p>
-    <div class="import-row">
-      <div class="drop-zone" id="dropZone">
-        <span class="drop-zone-text">ここにファイルをドロップ</span>
-        <span class="drop-zone-or">または</span>
-        <label class="import-label">
-          ファイルを選択
-          <input type="file" id="importFileInput" accept=".tsv,.csv,.txt">
-        </label>
-      </div>
-      <span class="editor-msg" id="importMsg"></span>
-    </div>
-    <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;font-size:13px;color:var(--muted);">
-      <input type="checkbox" id="hasHeaderCk" checked style="accent-color:var(--accent);width:15px;height:15px;">
-      1行目をヘッダーとして無視する
-    </label>
-    <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;font-size:13px;color:var(--muted);">
-      <input type="checkbox" id="hasExplainCk" checked style="accent-color:var(--accent);width:15px;height:15px;">
-      2列目を解説として読み込む（OFFにすると 問題, 正解, 誤答... の列順になる）
-    </label>
-    <textarea id="dataInput" spellcheck="false"></textarea>
-    <div class="tab-insert-row">
-      <button type="button" class="btn btn-ghost btn-tab-insert" id="tabInsertBtn">⇥ タブ挿入</button>
-    </div>
-    <div class="editor-footer">
-      <span class="editor-msg" id="editorMsg"></span>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-ghost" id="loadSampleBtn">サンプルを挿入</button>
-        <button class="btn btn-accent" id="applyBtn">この内容で開始</button>
-      </div>
+
+    <div class="editor-tabs" id="editorTabs">
+      <button type="button" class="btn btn-ghost editor-tab-btn active" data-tab="data">データ編集</button>
+      <button type="button" class="btn btn-ghost editor-tab-btn" data-tab="sets">問題セット</button>
+      <button type="button" class="btn btn-ghost editor-tab-btn" data-tab="images">画像</button>
+      <button type="button" class="btn btn-ghost editor-tab-btn" data-tab="backup">バックアップ</button>
+      <button type="button" class="btn btn-ghost editor-tab-btn" data-tab="display">表示設定</button>
     </div>
 
-    <div class="image-manager">
-      <h3 class="display">問題セットを保存</h3>
-      <p class="hint">チェック済みの問題、または全問題を名前付きで保存・エクスポートできます。</p>
-      <div class="image-manager-row" style="flex-wrap:wrap;gap:8px;align-items:center;">
-        <input type="text" id="setNameInput" placeholder="セット名を入力" style="flex:1;min-width:120px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;">
-        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap;">
-          <input type="checkbox" id="setCheckedOnlyCk" checked style="accent-color:var(--accent);width:14px;height:14px;">
-          チェック済みのみ
-        </label>
-        <button class="btn btn-ghost" id="saveSetBtn">保存</button>
-        <button class="btn btn-ghost" id="exportSetBtn">TSVエクスポート</button>
-      </div>
-      <div id="savedSetsList" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;"></div>
-      <div class="editor-msg" id="setMsg" style="margin-top:8px;"></div>
-    </div>
-
-    <div class="image-manager">
-      <h3 class="display">画像を割り当て（任意）</h3>
+    <div class="editor-tab-content" data-tab-content="data">
       <p class="hint">
-        問題Noを選んで画像ファイルを選択すると、Base64として端末内に保存されます（完全オフライン）。<br>
-        ファイルサイズが大きいと保存容量を圧迫するため、1枚あたり数百KB程度を推奨します。
+        列の並び：<b>チェック(0/1,任意), 問題文, 解説(任意), 正解, 誤答1, 誤答2…</b><br>
+        タブ／カンマ区切り。セル内改行は<b>" "</b>で囲む、下線は<b>__テキスト__</b>。
       </p>
-      <div class="image-manager-row">
-        <select id="imgNoSelect" class="mono"></select>
-        <input type="file" id="imgFileInput" accept="image/*">
-        <button class="btn btn-ghost" id="clearImgBtn">この問題の画像を削除</button>
+      <div class="import-row">
+        <div class="drop-zone" id="dropZone">
+          <span class="drop-zone-text">ここにファイルをドロップ</span>
+          <span class="drop-zone-or">または</span>
+          <label class="import-label">
+            ファイルを選択
+            <input type="file" id="importFileInput" accept=".tsv,.csv,.txt">
+          </label>
+          <span class="drop-zone-or">または</span>
+          <button type="button" class="btn btn-ghost" id="pasteClipboardBtn">貼り付け</button>
+        </div>
+        <span class="editor-msg" id="importMsg"></span>
       </div>
-      <div class="image-preview-wrap" id="imagePreviewWrap"></div>
-      <div class="editor-msg" id="imgMsg" style="margin-top:8px;"></div>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;font-size:13px;color:var(--muted);">
+        <input type="checkbox" id="hasHeaderCk" checked style="accent-color:var(--accent);width:15px;height:15px;">
+        1行目をヘッダーとして無視する
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;font-size:13px;color:var(--muted);">
+        <input type="checkbox" id="hasExplainCk" checked style="accent-color:var(--accent);width:15px;height:15px;">
+        2列目を解説として読み込む（OFFにすると 問題, 正解, 誤答... の列順になる）
+      </label>
+      <textarea id="dataInput" spellcheck="false"></textarea>
+      <div class="tab-insert-row">
+        <button type="button" class="btn btn-ghost btn-tab-insert" id="tabInsertBtn">タブ挿入</button>
+      </div>
+      <div class="editor-footer">
+        <span class="editor-msg" id="editorMsg"></span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" id="loadSampleBtn">サンプルを挿入</button>
+          <button class="btn btn-accent" id="applyBtn">この内容で開始</button>
+        </div>
+      </div>
     </div>
 
-    <div class="image-manager">
-      <h3 class="display">表示設定</h3>
-      <div style="margin-top:10px;border-top:1px dashed var(--border);padding-top:14px;">
-        <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">テーマ</div>
-        <select id="themeSelect" class="font-select"></select>
-      </div>
-      <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px;">
-        <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">フォント</div>
-        <select id="fontSelect" class="font-select"></select>
-        <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:120px;">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">問題文ウェイト</div>
-            <select id="fwDisplaySelect" class="font-select">
-              <option value="300">300 Light</option>
-              <option value="400">400 Regular</option>
-              <option value="500" selected>500 Medium</option>
-              <option value="600">600 SemiBold</option>
-              <option value="700">700 Bold</option>
-              <option value="800">800 ExtraBold</option>
-            </select>
-          </div>
-          <div style="flex:1;min-width:120px;">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">選択肢ウェイト</div>
-            <select id="fwBodySelect" class="font-select">
-              <option value="300">300 Light</option>
-              <option value="400" selected>400 Regular</option>
-              <option value="500">500 Medium</option>
-              <option value="600">600 SemiBold</option>
-              <option value="700">700 Bold</option>
-            </select>
-          </div>
+    <div class="editor-tab-content hidden" data-tab-content="sets">
+      <div class="image-manager">
+        <h3 class="display">問題セットを保存</h3>
+        <p class="hint">チェック済みの問題、または全問題を名前付きで保存・エクスポートできます。</p>
+        <div class="image-manager-row" style="flex-wrap:wrap;gap:8px;align-items:center;">
+          <input type="text" id="setNameInput" placeholder="セット名を入力" style="flex:1;min-width:120px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" id="setCheckedOnlyCk" checked style="accent-color:var(--accent);width:14px;height:14px;">
+            チェック済みのみ
+          </label>
+          <button class="btn btn-ghost" id="saveSetBtn">保存</button>
+          <button class="btn btn-ghost" id="exportSetBtn">TSVエクスポート</button>
         </div>
+        <div id="savedSetsList" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;"></div>
+        <div class="editor-msg" id="setMsg" style="margin-top:8px;"></div>
       </div>
-      <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px;">
-        <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">文字サイズ</div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <label style="font-size:12px;color:var(--muted);">問題文
-            <input type="range" id="fsQuestionRange" min="14" max="32" step="1" value="21"
-              style="width:100%;accent-color:var(--accent);">
-            <span id="fsQuestionVal">21px</span>
-          </label>
-          <label style="font-size:12px;color:var(--muted);">選択肢
-            <input type="range" id="fsOptionRange" min="11" max="22" step="0.5" value="14.5"
-              style="width:100%;accent-color:var(--accent);">
-            <span id="fsOptionVal">14.5px</span>
-          </label>
-          <label style="font-size:12px;color:var(--muted);">解説
-            <input type="range" id="fsExplainRange" min="11" max="22" step="0.5" value="13.5"
-              style="width:100%;accent-color:var(--accent);">
-            <span id="fsExplainVal">13.5px</span>
+    </div>
+
+    <div class="editor-tab-content hidden" data-tab-content="images">
+      <div class="image-manager">
+        <h3 class="display">画像を割り当て（任意）</h3>
+        <p class="hint">
+          問題Noを選んで画像ファイルを選択すると、Base64として端末内に保存されます（完全オフライン）。<br>
+          ファイルサイズが大きいと保存容量を圧迫するため、1枚あたり数百KB程度を推奨します。
+        </p>
+        <div class="image-manager-row">
+          <select id="imgNoSelect" class="mono"></select>
+          <input type="file" id="imgFileInput" accept="image/*">
+          <button class="btn btn-ghost" id="clearImgBtn">この問題の画像を削除</button>
+        </div>
+        <div class="image-preview-wrap" id="imagePreviewWrap"></div>
+        <div class="editor-msg" id="imgMsg" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <div class="editor-tab-content hidden" data-tab-content="backup">
+      <div class="image-manager">
+        <h3 class="display">バックアップ</h3>
+        <p class="hint">
+          問題データ・チェック状態・進捗・画像・表示設定をまとめてファイルに保存／復元できます。<br>
+          端末を変える場合や、ブラウザのデータが消えるのが心配な場合にご利用ください。
+        </p>
+        <div class="image-manager-row" style="flex-wrap:wrap;gap:8px;align-items:center;">
+          <button class="btn btn-ghost" id="exportBackupBtn">エクスポート</button>
+          <label class="import-label">
+            インポート
+            <input type="file" id="importBackupInput" accept=".json">
           </label>
         </div>
+        <div class="editor-msg" id="backupMsg" style="margin-top:8px;"></div>
       </div>
-      <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px;">
-        <button class="btn btn-ghost" id="resetDisplaySettingsBtn">設定を初期化</button>
-        <div class="editor-msg" id="resetDisplayMsg" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="editor-tab-content hidden" data-tab-content="display">
+      <div class="image-manager">
+        <h3 class="display">表示設定</h3>
+        <div style="margin-top:10px;border-top:1px dashed var(--border);padding-top:14px;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">テーマ</div>
+          <select id="themeSelect" class="font-select"></select>
+        </div>
+        <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">フォント</div>
+          <select id="fontSelect" class="font-select"></select>
+          <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:120px;">
+              <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">問題文ウェイト</div>
+              <select id="fwDisplaySelect" class="font-select">
+                <option value="300">300 Light</option>
+                <option value="400">400 Regular</option>
+                <option value="500" selected>500 Medium</option>
+                <option value="600">600 SemiBold</option>
+                <option value="700">700 Bold</option>
+                <option value="800">800 ExtraBold</option>
+              </select>
+            </div>
+            <div style="flex:1;min-width:120px;">
+              <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">選択肢ウェイト</div>
+              <select id="fwBodySelect" class="font-select">
+                <option value="300">300 Light</option>
+                <option value="400" selected>400 Regular</option>
+                <option value="500">500 Medium</option>
+                <option value="600">600 SemiBold</option>
+                <option value="700">700 Bold</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">文字サイズ</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <label style="font-size:12px;color:var(--muted);">問題文
+              <input type="range" id="fsQuestionRange" min="14" max="32" step="1" value="21"
+                style="width:100%;accent-color:var(--accent);">
+              <span id="fsQuestionVal">21px</span>
+            </label>
+            <label style="font-size:12px;color:var(--muted);">選択肢
+              <input type="range" id="fsOptionRange" min="11" max="22" step="0.5" value="14.5"
+                style="width:100%;accent-color:var(--accent);">
+              <span id="fsOptionVal">14.5px</span>
+            </label>
+            <label style="font-size:12px;color:var(--muted);">解説
+              <input type="range" id="fsExplainRange" min="11" max="22" step="0.5" value="13.5"
+                style="width:100%;accent-color:var(--accent);">
+              <span id="fsExplainVal">13.5px</span>
+            </label>
+          </div>
+        </div>
+        <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px;">
+          <button class="btn btn-ghost" id="resetDisplaySettingsBtn">設定を初期化</button>
+          <div class="editor-msg" id="resetDisplayMsg" style="margin-top:8px;"></div>
+        </div>
       </div>
     </div>
   </div>
