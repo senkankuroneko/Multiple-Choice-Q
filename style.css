@@ -1009,7 +1009,7 @@ body {
 
   /* カード：画面いっぱいに近い高さ */
   .card {
-    height: calc(100svh - 140px);
+    height: calc(100svh - 80px);
     min-height: 420px;
     padding: 14px 13px 12px;
   }
